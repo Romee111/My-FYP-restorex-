@@ -18,19 +18,31 @@ const ProductsPage = () => {
     quantity: '',
     imageCover: '',
   });
+  const user = localStorage.getItem("user");
+  const token = localStorage.getItem("token");
 
   // Fetch products from API
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (  ) => {
     try {
-      const response = await fetch('http://localhost:3000/api/v1/products/getAllProducts');
+      // debugger
+      const response = await fetch(
+        `http://localhost:3000/api/v1/products/getProductsBySellerId/${user}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       const data = await response.json();
 
       if (data.message === "success") {
-        setProducts(data.getAllProducts || []);
+        debugger
+        setProducts(data.getProductsBySellerId || []);
       } else {
         console.error("Failed to fetch products:", data);
       }
@@ -139,7 +151,7 @@ const ProductsPage = () => {
     };
 
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/products/updateProduct/${selectedProduct._id}`, {
+      const response = await fetch(`http://localhost:3000/api/v1/products/updateSellerProduct/${selectedProduct._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -231,12 +243,17 @@ const ProductsPage = () => {
   // Delete a product
   const handleDeleteProduct = async (productId) => {
     const token = localStorage.getItem('token');
+ 
+  
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/products/deleteProduct/${productId}`, {
+      const response = await fetch(`http://localhost:3000/api/v1/products/deleteSellerProduct/${productId}`, {
+        
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
+          
         },
+        
       });
 
       if (response.ok) {
@@ -255,6 +272,7 @@ const ProductsPage = () => {
         <h2 className="text-2xl font-semibold">Products</h2>
         <button
           onClick={() => setShowAddModal(true)}
+          style={{backgroundColor:"#001F3F", Color:"white"}}
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
         >
           Add New Product
@@ -272,7 +290,7 @@ const ProductsPage = () => {
             />
             <div className="p-4">
               <h3 className="text-lg font-semibold">{product.title}</h3>
-              <p className="text-gray-700 mt-2">${product.price.toFixed(2)}</p>
+              <p className="text-gray-700 mt-2">${product?.price?.toFixed(2)}</p>
               <p className="text-gray-500 mt-1">In Stock: {product.quantity}</p>
             </div>
             <div className="p-4 flex justify-between">
@@ -301,6 +319,7 @@ const ProductsPage = () => {
         <AddProductModal
           onClose={() => setShowAddModal(false)}
           onAddProduct={handleAddProduct}
+          
         />
       )}
 

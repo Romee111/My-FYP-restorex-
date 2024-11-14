@@ -14,6 +14,7 @@ const AuthForm = ({ type, onLogin }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          
         },
         body: JSON.stringify({ email, password }),
       });
@@ -24,6 +25,10 @@ const AuthForm = ({ type, onLogin }) => {
         console.log(decodedToken);
         if (decodedToken.role === 'seller') {
           localStorage.setItem('token', data.token); // Store token in localStorage
+           localStorage.setItem('role',decodedToken.role)
+           debugger
+           localStorage.setItem('user',data.user._id)
+
           onLogin(); // Call the login function to update the app's state
         } else {
           setError('Access denied. Only sellers can log in.');

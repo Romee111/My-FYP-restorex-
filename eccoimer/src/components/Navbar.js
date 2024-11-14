@@ -195,7 +195,7 @@ const uniqueCategories = heavyProducts.reduce((acc, product) => {
         </div>
 
         {/* User Icon */}
-        <div className="icon text-white text-xl space-x-8 ml-4">
+        <div className="icon text-white text-xl space-x-8 ml-4"  style={{}}>
           <FaUser />
         </div>
 
