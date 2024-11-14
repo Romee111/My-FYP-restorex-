@@ -131,13 +131,13 @@ const CategoryPage = () => {
   const [subcategoriesLoading, setSubcategoriesLoading] = useState(true);
 
   useEffect(() => {
-    // debugger
+  
     if (!productsLoading && heavyProducts.length > 0) {
       const filtered = heavyProducts.filter(
         product => product?.category?.name.toLowerCase() === categoryName?.toLowerCase()
       );
       if (filtered.length > 0) {
-        debugger
+      
         setFilteredProducts(filtered);
         setCategoryId(filtered[0]?.category?._id);
       }
@@ -148,7 +148,7 @@ const CategoryPage = () => {
     const fetchSubcategories = async () => {
       if (categoryId) {
         try {
-          debugger
+        
           const subCatData = await listSubCategories(categoryId);
           setSubcategories(subCatData);
         } catch (error) {

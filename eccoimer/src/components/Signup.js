@@ -1,261 +1,126 @@
-import React, { useState } from 'react';
-import { useRegister } from '../hooks/useRegister'; // Import the custom hook
-import Logo from "../assets/images/reslogo.png"
-import { useNavigate } from 'react-router-dom';
-const SignUp = () => {
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    address1: '',
-    address2: '',
-    country: '',
-    city: '',
-    pincode: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phone: '',
-    image: null,
+import React, { useState } from "react";
+import { useRegister } from "../hooks/useRegister";
+import { useNavigate } from "react-router-dom";
+
+const SignupPage = () => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "user",  // Set role to "user" by default for simple users
+    isActive: true,
+    city: "",
+    street: "",
+    phone: ""
   });
+
   const { register, loading, error } = useRegister();
   const navigate = useNavigate();
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
 
-  const handleImageChange = (e) => {
-    setForm({ ...form, image: e.target.files[0] });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate if the passwords match
-    if (form.password !== form.confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
-
-    // Send form data to the API using the register hook
-    const response = await register(form);
-
-    if (response) {
-      alert('Registration successful');
-      navigate('/login');
-      // Optionally, redirect the user to another page
+    try {
+      await register(formData);
+      alert("User registered successfully!");
+      // navigate("/LoginModal"); // Redirect to the user's dashboard or desired page
+    } catch (err) {
+      console.error("Error registering user:", err);
     }
   };
 
   return (
-    <div className="flex bg-white my-10">
-      {/* Left side with logo */}
-      <div className="w-1/2 flex justify-center items-center ">
-        <img src={Logo} alt="Logo" className="w-96" />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-2xl">
+        <div className="bg-[#001F3F] p-6 text-center text-white">
+          <h1 className="text-3xl font-bold mb-2">Welcome to User Signup</h1>
+          <p>Join our platform today!</p>
+        </div>
 
-      {/* Right side with form */}
-      <div className="w-1/2 flex justify-start items-center ">
-        <form
-          className="bg-white p-8 rounded-lg shadow-lg w-96"
-          onSubmit={handleSubmit}
-        >
-          <h2 className="text-2xl font-bold text-center mb-6 text-[#001F3F]">
-            SIGN UP RESTOREX
-          </h2>
+        <form className="p-8 space-y-4" onSubmit={handleSubmit}>
+          {error && <p className="text-red-600">{error}</p>}
+          {loading && <p className="text-blue-600">Loading...</p>}
 
-          {error && <p className="text-red-600">{error}</p>} {/* Display error message */}
-          {loading && <p className="text-blue-600">Loading...</p>} {/* Display loading message */}
-
-          {/* First Name and Last Name */}
-          <div className="mb-4 flex space-x-4">
-            <div>
-              <label className="block text-gray-700">First Name</label>
-              <input
-                type="text"
-                name="firstName"
-                value={form.firstName}
-                onChange={handleInputChange}
-                className="w-full border border-gray-300 p-2 rounded-md"
-                placeholder="First name"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700">Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                value={form.lastName}
-                onChange={handleInputChange}
-                className="w-full border border-gray-300 p-2 rounded-md"
-                placeholder="Last name"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Address1 */}
-          <div className="mb-4">
-            <label className="block text-gray-700">Address</label>
+          {/* Name and Email */}
+          <div className="flex gap-4">
             <input
               type="text"
-              name="address1"
-              value={form.address1}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 p-2 rounded-md"
-              placeholder="Address"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Full Name"
               required
+              className="w-1/2 p-2 border border-gray-300 rounded"
             />
-          </div>
-
-          {/* Address2 */}
-          <div className="mb-4">
-            <label className="block text-gray-700">Address2</label>
-            <input
-              type="text"
-              name="address2"
-              value={form.address2}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 p-2 rounded-md"
-              placeholder="Address2"
-            />
-          </div>
-
-          {/* Country and City */}
-          <div className="mb-4 flex space-x-4">
-            <div>
-              <label className="block text-gray-700">Country</label>
-              <select
-                name="country"
-                value={form.country}
-                onChange={handleInputChange}
-                className="w-full border border-gray-300 p-2 rounded-md"
-                required
-              >
-                <option value="">Select Country</option>
-                {/* Add more countries here */}
-                <option value="USA">USA</option>
-                <option value="Canada">Canada</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700">State</label>
-              <input
-                type="text"
-                name="state"
-                value={form.state}
-                onChange={handleInputChange}
-                className="w-full border border-gray-300 p-2 rounded-md"
-                placeholder="State"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700">City</label>
-              <select
-                name="city"
-                value={form.city}
-                onChange={handleInputChange}
-                className="w-full border border-gray-300 p-2 rounded-md"
-                required
-              >
-                <option value="">Select City</option>
-                {/* Add more cities here */}
-                <option value="New York">New York</option>
-                <option value="Toronto">Toronto</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Pincode */}
-          <div className="mb-4">
-            <label className="block text-gray-700">Pincode</label>
-            <input
-              type="text"
-              name="pincode"
-              value={form.pincode}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 p-2 rounded-md"
-              placeholder="Pincode"
-              required
-            />
-          </div>
-
-          {/* Email */}
-          <div className="mb-4">
-            <label className="block text-gray-700">Email</label>
             <input
               type="email"
               name="email"
-              value={form.email}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 p-2 rounded-md"
-              placeholder="Email ID"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Email"
               required
+              className="w-1/2 p-2 border border-gray-300 rounded"
             />
           </div>
 
-          {/* Password and Confirm Password */}
-          <div className="mb-4 flex space-x-4">
-            <div>
-              <label className="block text-gray-700">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleInputChange}
-                className="w-full border border-gray-300 p-2 rounded-md"
-                placeholder="Password"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700">Confirm Password</label>
-              <input
-                type="password"
-                name="confirmPassword"
-                value={form.confirmPassword}
-                onChange={handleInputChange}
-                className="w-full border border-gray-300 p-2 rounded-md"
-                placeholder="Confirm Password"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Phone */}
-          <div className="mb-4">
-            <label className="block text-gray-700">Phone</label>
+          {/* Password and Phone */}
+          <div className="flex gap-4">
             <input
-              type="tel"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Password"
+              required
+              className="w-1/2 p-2 border border-gray-300 rounded"
+            />
+            <input
+              type="text"
               name="phone"
-              value={form.phone}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 p-2 rounded-md"
-              placeholder="+1"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="Phone"
               required
+              className="w-1/2 p-2 border border-gray-300 rounded"
             />
           </div>
 
-          {/* Upload Image */}
-          <div className="mb-4">
-            <label className="block text-gray-700">Upload Image</label>
+          {/* City and Street */}
+          <div className="flex gap-4">
             <input
-              type="file"
-              name="image"
-              onChange={handleImageChange}
-              className="w-full border border-gray-300 p-2 rounded-md"
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              placeholder="City"
+              required
+              className="w-1/2 p-2 border border-gray-300 rounded"
+            />
+            <input
+              type="text"
+              name="street"
+              value={formData.street}
+              onChange={handleChange}
+              placeholder="Street"
+              required
+              className="w-1/2 p-2 border border-gray-300 rounded"
             />
           </div>
 
-          {/* Register Button */}
           <button
             type="submit"
-            className="w-full bg-blue-700 text-white py-2 mt-4 rounded-lg hover:bg-blue-900 transition"
-            disabled={loading} // Disable the button while loading
+            disabled={loading}
+            className="w-full bg-[#001F3F] text-white p-2 rounded hover:bg-blue-800"
           >
-            {loading ? 'Registering...' : 'Register'}
+            {loading ? "Signing up..." : "Sign Up"}
           </button>
         </form>
       </div>
@@ -263,4 +128,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default SignupPage;

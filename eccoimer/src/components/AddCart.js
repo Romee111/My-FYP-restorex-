@@ -13,7 +13,7 @@ function AddCart({ show, handleClose, product }) {
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
-        const response = await axios.get('http://localhost:2900/getCart/getCart', { params: { userId } });
+        const response = await axios.get('http://localhost:3000/restorex/carts/getLoggedUserCar', { params: { userId } });
         setCartItems(response.data.cartItems || []);
       } catch (error) {
         console.error('Failed to fetch cart items:', error);
@@ -26,7 +26,7 @@ function AddCart({ show, handleClose, product }) {
   // Function to add items to cart
   const addToCart = async (newItem) => {
     try {
-      const response = await axios.post('http://localhost:2900/addtocart/createCart', newItem);
+      const response = await axios.post('http://localhost:3000/restorex/carts/addProductToCart', newItem);
       if (response.data.success) {
         // If the API call is successful, update the cart items state
         setCartItems([...cartItems, newItem]);

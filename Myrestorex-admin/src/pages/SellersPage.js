@@ -335,6 +335,7 @@ const SellersPage = () => {
               <th className="py-3 px-6 text-left">Name</th>
               <th className="py-3 px-6 text-left">Email</th>
               <th className="py-3 px-6 text-left">Buisness Name</th>
+              <th className="py-3 px-6 text-center"> businessAddress  </th>
               <th className="py-3 px-6 text-center">Actions</th>
             </tr>
           </thead>

@@ -26,7 +26,7 @@ const useCart = () => {
       localStorage.setItem('cart', JSON.stringify(existingCartItems));
 
       // Sync with backend
-      const response = await axios.post('http://localhost:2900/addtocart/createCart', item);
+      const response = await axios.post('http://localhost:3000/restorex/carts/addProductToCart', item);
       const data = response.data;
 
       // Dispatch action to add item to Redux store
@@ -51,7 +51,7 @@ const useCart = () => {
       localStorage.setItem('cart', JSON.stringify(updatedCartItems));
 
       // Sync with backend
-      await axios.delete(`http://localhost:2900/addtocart/deleteCart/${id}`);
+      await axios.delete(`http://localhost:3000/restorex/carts/removeProductFromCart/${id}`);
 
       // Dispatch action to remove item from Redux store
       dispatch(removeFromCart(id));
@@ -63,7 +63,7 @@ const useCart = () => {
   };
   const getCart = async () => {
     try {
-      const response = await axios.get(`http://localhost:2900/getCart/getCart`);
+      const response = await axios.get(`http://localhost:3000/restorex/carts/getLoggedUserCart`);
       const data = response.data.addtocart; // Assuming addtocart contains the cart items
 
       // Save the cart data to local storage

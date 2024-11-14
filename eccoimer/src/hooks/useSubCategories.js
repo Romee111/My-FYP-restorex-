@@ -23,7 +23,7 @@ export function useSubCategories() {
   const listSubCategories = useCallback(async (categoryId) => {
     try {
       const response = await axios.get(`http://localhost:3000/restorex/categories/${categoryId}/subcategories/getALLSubCAtegories`);
-      debugger
+    
       const data = response.data.getAllSubCategories;
       console.log(data);
       return data;

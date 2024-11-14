@@ -10,7 +10,7 @@ export const useSearchProducts = () => {
     setLoading(true);
     try {
       const response = await axios.get(`http://localhost:3000/api/v1/products/getAllProducts?keyword=${query}`);
-      debugger
+    
       const data = response.data.getAllProducts;
       setSearchResults(data); // Set the search results to state
     } catch (err) {
@@ -23,7 +23,7 @@ export const useSearchProducts = () => {
   const getSuggestions = async (query) => {
     try {
       const response = await axios.get(`http://localhost:3000/api/v1/products/getAllProducts?keyword=${query}`);
-      // debugger
+     
 
       const data = response.data.getAllProducts;
       setSuggestions(data); // Get the first 5 suggestions

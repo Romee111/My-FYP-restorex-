@@ -1,4 +1,4 @@
-// src/components/AuthForm.js
+
 import { useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
 const AuthForm = ({ type, onLogin }) => {

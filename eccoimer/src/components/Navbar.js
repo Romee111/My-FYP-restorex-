@@ -22,7 +22,7 @@ const Navbar = () => {
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
-        const response = await axios.get('http://localhost:2900/getCart/getCart', { params: { userId } });
+        const response = await axios.get('http://localhost:3000/restorex/carts/getLoggedByUserCart', { params: { userId } });
         setCartItems(response.data.addtocart);
       } catch (error) {
         console.error('Failed to fetch cart items:', error);
@@ -123,7 +123,7 @@ const Navbar = () => {
     }
   };
 const uniqueCategories = heavyProducts.reduce((acc, product) => {
-  // debugger
+  
     const categoryName = product?.category?.name;
     if (categoryName && !acc.includes(categoryName)) {
       acc.push(categoryName);
@@ -222,7 +222,7 @@ const uniqueCategories = heavyProducts.reduce((acc, product) => {
                       <div className="flex items-center gap-2">
                         <img
                           className="w-[104px]"
-                          src={item.images[0]} // Assuming images is an array
+                          src={item.images} // Assuming images is an array
                           alt={item.name}
                         />
                         <span>{item.title}</span>
@@ -271,7 +271,7 @@ const uniqueCategories = heavyProducts.reduce((acc, product) => {
         <p>Loading...</p>
       ) : (
         <ul className="space-y-2">
-          {uniqueCategories.map((category, index) => (
+          {uniqueCategories?.map((category, index) => (
             <li key={index}>
               <Link
                 to={`/category/${category}`}
@@ -285,9 +285,7 @@ const uniqueCategories = heavyProducts.reduce((acc, product) => {
       )}
     </div>
   </div>
-        <a href="#" className="hover:underline">
-          Brands
-        </a>
+        
         <Link to="/sellersignup" className="hover:underline">
           Become a Seller
         </Link>

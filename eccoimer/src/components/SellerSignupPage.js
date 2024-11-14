@@ -39,44 +39,33 @@ const SellerSignupPage = () => {
   const handleFileChange = (e) => {
     const { name } = e.target;
     const file = e.target.files[0];
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: file
-    }));
+    if (file) {
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: file
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const submitData = {
-      ...formData,
-      addresses: [
-        {
-          city: formData.city,
-          street: formData.street,
-          phone: formData.phone
-        }
-      ],
-      sellerInfo: {
-        businessName: formData.businessName,
-        businessAddress: formData.businessAddress,
-        businessType: formData.businessType,
-        taxIdNumber: formData.taxIdNumber,
-        bankAccountNumber: formData.bankAccountNumber,
-        bankName: formData.bankName,
-        accountHolderName: formData.accountHolderName,
-        branchCode: formData.branchCode,
-        documents: {
-          idCardNumber: formData.idCardNumber,
-          idImage1: formData.idImage1,
-          idImage2: formData.idImage2
-        }
-      }
-    };
-    debugger
 
-    await register(submitData);
-    alert("Seller registered successfully!");
-    navigate("/sellerPanel"); // Redirect to seller panel
+    // Using FormData to include file data
+    const submitData = new FormData();
+    Object.keys(formData).forEach((key) => {
+      if (formData[key] !== null) {
+        submitData.append(key, formData[key]);
+      }
+    });
+
+    try {
+      await register(formData);
+      alert("Seller registered successfully!");
+      window.location.href = "http://localhost:3002";
+   // Redirect to seller panel
+    } catch (err) {
+      console.error("Error registering seller:", err);
+    }
   };
 
   return (
@@ -87,7 +76,7 @@ const SellerSignupPage = () => {
           <p>Join our platform and start selling today!</p>
         </div>
 
-        <form className="p-8 space-y-4" onSubmit={handleSubmit}>
+        <form className="p-8 space-y-4" onSubmit={handleSubmit} encType="multipart/form-data">
           {error && <p className="text-red-600">{error}</p>}
           {loading && <p className="text-blue-600">Loading...</p>}
 
@@ -254,16 +243,15 @@ const SellerSignupPage = () => {
               required
               className="w-1/2 p-2 border border-gray-300 rounded"
             />
-            <input
+            {/* <input
               type="file"
               name="idImage1"
               onChange={handleFileChange}
               required
               className="w-1/2 p-2 border border-gray-300 rounded"
-            />
+            /> */}
           </div>
-          <div className="flex gap-4">
-            <label className="block text-gray-600 w-1/2">Upload ID Image 2</label>
+          {/* <div className="flex gap-4">
             <input
               type="file"
               name="idImage2"
@@ -271,7 +259,7 @@ const SellerSignupPage = () => {
               required
               className="w-1/2 p-2 border border-gray-300 rounded"
             />
-          </div>
+          </div> */}
 
           <button
             type="submit"
