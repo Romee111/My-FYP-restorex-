@@ -31,7 +31,7 @@ const ProductsPage = () => {
           <thead className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
             <tr>
               <th className="py-3 px-6 text-left">Product ID</th>
-              <th className="py-3 px-6 text-left">Product Name</th>
+              <th className="py-3 px-6 text-left">Product title</th>
               <th className="py-3 px-6 text-left">Price</th>
               <th className="py-3 px-6 text-left">Stock</th>
             </tr>

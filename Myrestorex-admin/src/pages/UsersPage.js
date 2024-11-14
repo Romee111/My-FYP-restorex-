@@ -140,6 +140,7 @@ const UsersPage = () => {
               <th className="py-3 px-6 text-left">Name</th>
               <th className="py-3 px-6 text-left">Email</th>
               <th className="py-3 px-6 text-left">Phone</th>
+              <th className="py-3 px-6 text-left">city</th>
               <th className="py-3 px-6 text-center">Actions</th>
             </tr>
           </thead>
@@ -150,6 +151,7 @@ const UsersPage = () => {
                 <td className="py-3 px-6 text-left">{user.name}</td>
                 <td className="py-3 px-6 text-left">{user.email}</td>
                 <td className="py-3 px-6 text-left">{user.addresses[0]?.phone || 'N/A'}</td> {/* Phone number */}
+                <td className="py-3 px-6 text-left">{user.addresses[0]?.city || 'N/A'}</td>
                 <td className="py-3 px-6 text-center">
                   {/* <button className="text-blue-500 hover:text-blue-700 mr-2">
                     <PencilIcon className="h-5 w-5 inline" />

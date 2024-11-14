@@ -76,7 +76,7 @@ function App() {
         </Routes>
 
         {/* Conditionally render LoginModal if the user is not logged in */}
-        {!isUserLoggedIn && <LoginModal setIsUserLoggedIn={setIsUserLoggedIn} />}
+        {/* {!isUserLoggedIn && <LoginModal setIsUserLoggedIn={setIsUserLoggedIn} />} */}
 
         {/* Query button at the bottom right of the page */}
         <button

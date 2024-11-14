@@ -17,8 +17,8 @@ const Navbar = () => {
   const { products, loading , heavyProducts } = useProducts();
   const [showCategories, setShowCategories] = useState(false);
 
-  const user = JSON.parse(localStorage.getItem('user'));
-  const userId = user?.user_id;
+  // const user = JSON.parse(localStorage.getItem('user'));
+  // const userId = user?.user_id;
   useEffect(() => {
     const fetchCartItems = async () => {
       try {

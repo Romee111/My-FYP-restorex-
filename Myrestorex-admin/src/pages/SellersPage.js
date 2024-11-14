@@ -346,8 +346,11 @@ const SellersPage = () => {
                 <td className="py-3 px-6 text-left">{user.name}</td>
                 <td className="py-3 px-6 text-left">{user.email}</td>
                 <td className="py-3 px-6 text-left">{user?.sellerInfo?.businessName}</td>
+                <td className="py-3 px-6 text-left">{user?.sellerInfo?.businessAddress}</td>
+                
                 <td className="py-3 px-6 text-center">
                   <button className="text-blue-500 hover:text-blue-700 mr-2">
+
                     <PencilIcon onClick={() => handleEditClick(user)} className="h-5 w-5 inline" />
                   </button>
                   <button onClick={() => handleDelete(user._id)} className="text-red-500 hover:text-red-700">
