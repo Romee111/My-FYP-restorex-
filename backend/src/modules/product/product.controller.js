@@ -127,6 +127,68 @@ const updateProduct = catchAsyncError(async (req, res, next) => {
   !updateProduct && next(new AppError("Product was not found", 404));
 });
 
+ const getProductsBySellerId=catchAsyncError(async(req,res,next)=>{
+  const {id}=req.params
+  console.log(id, 'Yooooooo')
+  const getProductsBySellerId=await productModel.find({createdBy:id})
+  res.status(201).json({message:"success",getProductsBySellerId})
+ })
+ const updateSellerProduct = async (req, res, next) => {
+  try {
+    const { _id: userId, role } = req.user; // Extract logged-in user's ID and role
+    const productId = req.params.id;
+    const updateData = req.body;
+
+    // Find the product
+    const product = await productModel.findById(productId);
+
+    // Check if product exists
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Check if the user has permission to update the product
+    if (role === 'admin' || (role === 'seller' && product.createdBy.toString() === userId.toString())) {
+      // Update the product
+      const updatedProduct = await productModel.findByIdAndUpdate(productId, updateData, {
+        new: true,
+        runValidators: true,
+      });
+      return res.status(200).json({ message: "Product updated successfully", product: updatedProduct });
+    } else {
+      return res.status(403).json({ message: "Unauthorized to update this product" });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+const deleteSellerProduct = async (req, res, next) => {
+  try {
+    const { _id: userId, role } = req.user; // Extract logged-in user's ID and role
+    const productId = req.params.id;
+
+    // Find the products
+    const product = await productModel.findById(productId);
+
+    // Check if product exists
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Check if the user has permission to delete the product
+    if (role === 'admin' || (role === 'seller' && product.createdBy.toString() === userId.toString())) {
+      // Delete the product
+      await productModel.findByIdAndDelete(productId);
+      return res.status(200).json({ message: "Product deleted successfully" });
+    } else {
+      return res.status(403).json({ message: "Unauthorized to delete this product" });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 const deleteProduct = deleteOne(productModel, "Product");
 export {
   addProduct,
@@ -135,8 +197,10 @@ export {
   getSpecificProduct,
   updateProduct,
   deleteProduct,
-
+  getProductsBySellerId,
    getProductsById,
    newArrivals,
-   getSellerProducts
-};
+   getSellerProducts,
+   updateSellerProduct,
+   deleteSellerProduct,
+  };

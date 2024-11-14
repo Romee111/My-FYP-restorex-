@@ -45,12 +45,28 @@ productRouter
   .get(product.getAllProducts);
 
 // Route to get products by seller's ID
-// productRouter
-//   .route("/getProductBySellerId/:id")
-//   .get(
-//     allowedTo("seller"),
-//     product.getproductBySellerId
-//   );
+productRouter
+  .route("/getProductsBySellerId/:id")
+  .get(
+    protectedRoutes,
+    allowedTo("seller"),
+    product.getProductsBySellerId
+  );
+  productRouter
+  .route("/updateSellerProduct/:id")
+  .put(
+    protectedRoutes,
+    allowedTo("seller"),
+    product.updateSellerProduct
+  )
+
+  productRouter
+  .route("/deleteSellerProduct/:id")
+  .delete(
+    protectedRoutes,
+    allowedTo("seller"),
+    product.deleteSellerProduct
+  )
 
 // Route for new arrivals
 productRouter

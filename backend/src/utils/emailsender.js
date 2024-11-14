@@ -106,3 +106,51 @@ export async function sendInstallmentReminder(userEmail, installment) {
     console.error('Error sending reminder email:', error);
   }
 }
+export const sendSignupEmail = async (email, userId) => {
+  try {
+    if (!email || !userId) {
+      throw new Error("Email and User ID are required");
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      throw new Error("No user found with this email");
+    }
+
+    // Generate a login link or an account activation link
+    const loginLink = `${process.env.FRONTEND_URL}/login?userId=${userId}`;
+
+    const subject = "Welcome to Our Platform!";
+    const message = `<h1>Thank you for signing up!</h1>
+                     <p>Your account has been created successfully. Please click the link below to log in:</p>
+                     <p><a href="${loginLink}">Click here to log in</a></p>`;
+
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: user.email,
+      subject,
+      html: message,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+        throw new Error("Error sending email");
+      } else {
+        console.log('Signup confirmation email sent: ' + info.response);
+      }
+    });
+  } catch (err) {
+    console.log(err.message);
+    throw new Error(err.message);
+  }
+}

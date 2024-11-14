@@ -53,5 +53,7 @@ queryRouter
     protectedRoutes,
     allowedTo("admin"),
     queryController.getAllQueries);
-
+1
+''
 export default queryRouter;
+0
