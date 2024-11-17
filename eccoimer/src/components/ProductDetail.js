@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { useDetailProduct } from '../hooks/useDetailProduct';
-import AddCart from './AddCart'; // Assuming AddCart is a modal for adding products to the cart
+// Default import
+// Import AddToCartModal component
 import useReview from '../hooks/useReview'; // Import useReview hook
 import { useNavigate } from 'react-router-dom';
 import LoginModal from './SignIn'; // Import the LoginModal component
@@ -12,7 +13,7 @@ const ProductDetail = () => {
   const { addReviewHandler, getReviewofProduct, eachProductReview, loading: reviewLoading } = useReview();
   const [selectedInstallment, setSelectedInstallment] = useState('');
   const [showInstallmentOptions, setShowInstallmentOptions] = useState(false);
-  const [showCartModal, setShowCartModal] = useState(false);
+  const [showCartModal, setShowCartModal] = useState(false); // State to manage cart modal visibility
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
   const [selectedColor, setSelectedColor] = useState(product?.color); // Default to first color if available
@@ -42,9 +43,9 @@ const ProductDetail = () => {
   }, [id]);
 
   // Handle Add to Cart logic (open modal or trigger login modal if user is not logged in)
-  const handleAddToCart = () => {
+  const handleAddToCart = (product) => {
     if (isUserLoggedIn) {
-      setShowCartModal(true); // Show the cart modal if the user is logged in
+      navigate('/order', { state: product }); // Open cart modal if the user is logged in
     } else {
       setShowLoginModal(true); // Show the login modal if the user is not logged in
     }
@@ -68,7 +69,7 @@ const ProductDetail = () => {
         rating,
         review,
       };
-      const response = await addReviewHandler(reviewData, token); 
+      const response = await addReviewHandler(reviewData, token);
       if (response) {
         setRating(0);
         setReview('');
@@ -103,9 +104,9 @@ const ProductDetail = () => {
 
           {/* Price and Installment Options */}
           <div className="mb-6">
-            <h2 className="text-3xl font-bold text-red-500 mb-4">${product.priceAfterDiscount.toFixed(2)}</h2>
-            <p className="line-through text-gray-500">${product.price.toFixed(2)}</p>
-            
+            <h2 className="text-3xl font-bold text-red-500 mb-4">${product?.priceAfterDiscount?.toFixed(2)}</h2>
+            <p className="line-through text-gray-500">${product?.price?.toFixed(2)}</p>
+
             {shouldShowInstallmentOptions && (
               <button
                 className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none transition"
@@ -145,32 +146,24 @@ const ProductDetail = () => {
             )}
           </div>
 
-          {/* Color Selection */}
-          {/* Add color selection logic here */}
-
-          {/* Size Selection */}
-          {/* Add size selection logic here */}
-
           {/* Add to Cart and Buy Now Buttons */}
           <div className="flex space-x-4 mb-6">
             <button
               className=" py-3 px-6 rounded-lg  bgColor-[#001F3F] "
-              onClick={handleAddToCart}
-              style={{backgroundColor: '#001f3f', color: 'white'}}
-            >
-              Add to Cart
-            </button>
-            <button
-              className=" text-white py-3 px-6 rounded-lg  "
-              onClick={handleBuyNow}
-              style={{backgroundColor: '#001f3f', color: 'white'}}
+              onClick={() => { handleAddToCart(product) }}
+              style={{ backgroundColor: '#001f3f', color: 'white' }}
             >
               Buy Now
+              {/* Add to Cart */}
             </button>
+            {/* <button
+              className=" text-white py-3 px-6 rounded-lg  "
+              onClick={handleBuyNow}
+              style={{ backgroundColor: '#001f3f', color: 'white' }}
+            >
+              Buy Now
+            </button> */}
           </div>
-          
-          {/* Review Section */}
-          {/* Review submission logic */}
         </div>
       </div>
 
@@ -179,6 +172,14 @@ const ProductDetail = () => {
         <LoginModal setIsUserLoggedIn={setIsUserLoggedIn} />
       )}
 
+      {/* Show AddToCartModal */}
+      {showCartModal && (
+        <AddToCartModal
+          product={product}
+          showModal={showCartModal}
+          setShowModal={setShowCartModal}
+        />
+      )}
     </div>
   );
 };

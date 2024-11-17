@@ -7,7 +7,7 @@ const CheckoutPage = () => {
     setSelectedMethod(method);
   };
 
-  return (
+  return ( 
     <div className="flex flex-col items-center justify-center bg-gray-100">
       <div className="bg-white p-6 rounded-lg shadow-lg w-[600px] max-w-xl">
         <h2 className="text-2xl font-semibold mb-6">Order Payment</h2>

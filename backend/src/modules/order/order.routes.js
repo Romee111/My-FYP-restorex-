@@ -9,7 +9,7 @@ orderRouter
   .route("/createOrder")
   .post(
     protectedRoutes,
-    allowedTo("user"),
+ 
     order.createOrder
   )
 

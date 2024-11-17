@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { FaTrashAlt } from 'react-icons/fa';
 import axios from 'axios';
+import { useLocation } from 'react-router-dom';
 
 function Order() {
+    const location = useLocation();
+    const product = location.state; // Accessing the product details from location.state
+    console.log("Product Details:", product); // Logging to check if product data is being received
+    const userData = localStorage.getItem('user');
+    const token = userData?.token; // Safeguard in case 'user' data is not available
     const [cartItems, setCartItems] = useState([]);
     const [form, setForm] = useState({
         name: '',
@@ -16,7 +22,6 @@ function Order() {
     const [paymentMethod, setPaymentMethod] = useState('installment');
     const [CNIC, setCNIC] = useState('');
     const [installmentPeriod, setInstallmentPeriod] = useState(6);  // Default to 6 months
-
     const user = JSON.parse(localStorage.getItem('user'));
     const userId = user?.user_id;
 
@@ -41,7 +46,6 @@ function Order() {
             await axios.delete(`http://localhost:2900/addtoCart/deleteCart/${product_id}`, {
                 data: { userId }
             });
-
             setCartItems(cartItems.filter(item => item.product_id._id !== product_id));
         } catch (error) {
             console.error('Error removing item from cart:', error);
@@ -60,8 +64,9 @@ function Order() {
 
     // Create order
     const createOrder = async () => {
+        window.location.href = "https://www.jazzcash.com.pk/";
         const orderData = {
-            cartId: '67323bcbc21708aee1407544', // Replace with actual cartId from backend if necessary
+            cartId: '67323bcbc21708aee1407544',
             shippingAddress: {
                 street: form.address,
                 city: form.city,
@@ -75,7 +80,13 @@ function Order() {
         };
 
         try {
-            const response = await axios.post('http://localhost:3000/api/v1/orders/createOrder', orderData);
+            const response = await axios.post('http://localhost:3000/restorex/orders/createOrder', orderData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`, // Add the token to the authorization header
+                    },
+                }
+            );
             if (response.status === 200) {
                 alert('Order placed successfully!');
                 // Navigate to a confirmation page or clear cart, etc.
@@ -86,36 +97,24 @@ function Order() {
         }
     };
 
+    // Safeguard: Render a loading or placeholder message if product is null
+    if (!product) {
+        return <div>Loading product details...</div>; // Or a fallback message
+    }
+
     return (
         <div className="container mx-auto py-12">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Order Summary Section */}
+                {/* Product Details Section */}
                 <div className="bg-white shadow-md rounded-lg p-6">
-                    <h2 className="text-3xl font-semibold mb-6">Order Summary</h2>
+                    <h2 className="text-3xl font-semibold mb-6">{product?.title || 'No title available'}</h2>
                     <div className="p-4 bg-gray-100 rounded-lg">
-                        {cartItems.length === 0 ? (
-                            <p>No items in the cart.</p>
-                        ) : (
-                            <ul>
-                                {cartItems.map((item) => (
-                                    <li key={item.product_id} className="flex justify-between items-center my-2">
-                                        <div className="flex items-center space-x-4">
-                                            <img className='w-[104px]' src={item.product_id.images} alt="" />
-                                            <span>{item.product_id.name}</span>
-                                        </div>
-                                        <div className='gap-2 flex'>
-                                            <span>${(item.product_id.price).toFixed(2)}</span>
-                                            <button onClick={() => handleRemoveFromCart(item.product_id._id)}>
-                                                <FaTrashAlt className="text-red-600 hover:text-red-800" />
-                                            </button>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                        <div className="mt-4 text-xl font-semibold">
-                            Total: <span className="font-bold text-2xl">${totalAmount.toFixed(2)}</span>
-                        </div>
+                        <img src={product?.images[0] || '/default-image.jpg'} alt={product?.title || 'Product image'} className=" w-1/2 rounded-lg mb-4" />
+                        <p className="text-lg mb-2">{product?.description || 'No description available'}</p>
+                        <p className="text-lg">Available Colors: {product?.color?.join(', ') || 'No colors available'}</p>
+                        <p className="text-lg">Available Sizes: {product?.size?.join(', ') || 'No sizes available'}</p>
+                        <p className="text-xl font-semibold">Price: ${product?.priceAfterDiscount || '0'}</p>
+                        <p className="text-sm text-gray-500">Original Price: ${product?.price || '0'}</p>
                     </div>
                 </div>
 
@@ -123,6 +122,7 @@ function Order() {
                 <div className="bg-white shadow-md rounded-lg p-6">
                     <h2 className="text-3xl font-semibold mb-6">Shipping Information</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Render input fields for shipping info */}
                         <div className="mb-4">
                             <label htmlFor="name" className="block text-sm font-bold text-gray-700">Name</label>
                             <input
@@ -147,6 +147,7 @@ function Order() {
                                 placeholder="Enter your address"
                             />
                         </div>
+                        {/* Additional fields */}
                         <div className="mb-4">
                             <label htmlFor="email" className="block text-sm font-bold text-gray-700">Email</label>
                             <input

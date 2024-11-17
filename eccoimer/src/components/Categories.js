@@ -212,7 +212,7 @@ const CategoryPage = () => {
         {filteredProducts.map(product => (
           <div key={product._id} className="text-center bg-white p-4 rounded-lg shadow-md">
             <div className="icon bg-gray-100 p-4 rounded-lg">
-              <img src={product.images[0]} alt={product.name} className="w-full h-48 object-contain" />
+              <img src={product.images[0]} alt={product.title} className="w-full h-48 object-contain" />
             </div>
             <p className="mt-2 text-sm">{product.name}</p>
             <p className="mt-1 font-bold">${product.price}</p>

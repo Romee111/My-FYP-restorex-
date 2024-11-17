@@ -16,8 +16,9 @@ import SellerSignupPage from "./components/SellerSignupPage";
 import QueryModal from "./components/QueryModal";
 import useQuery from "./hooks/useQuery";
 import ArrivalsCard from "./components/ArrivalsCard";
-// import ProfileModal from "./components/Profile"; // Import Profile component
-import Profile from "./components/Profile";
+
+import LandingSlider from "./components/landingslider";
+
 function App() {
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(!!localStorage.getItem("user"));
   const { Query, loading, error, addQuery } = useQuery();
@@ -59,6 +60,7 @@ function App() {
               <>
                 <HeroSection />
                 <ProductGrid />
+                <LandingSlider />
                 <ArrivalsCard />
                 <CategoryMenu />
               </>

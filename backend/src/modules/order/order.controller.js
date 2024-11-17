@@ -6,7 +6,7 @@ import { get } from 'mongoose';
 
 
 export async function createOrder(req, res) {
-  const {cartId, shippingAddress, paymentMethod, totalAmount, CNIC, installmentPeriod, userEmail} = req.body
+  const {cartId, shippingAddress, paymentMethod, totalAmount, CNIC, installmentPeriod, userEmail,zip} = req.body
 
   // Fetch the cart data using the cartI
   
@@ -70,7 +70,7 @@ await newOrder.save()
         paymentRedirectURL: cartData.cartItem[0].payment_URL
       });
     } else {
-      return res.json({ message: "Order placed, but error sending email." });
+      return res.json({ message: "Order placed, but error sending email." , order: newOrder});
     }
   }
 

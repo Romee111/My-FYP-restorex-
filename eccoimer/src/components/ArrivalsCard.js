@@ -20,7 +20,7 @@ function ArrivalsCard() {
             className="bg-white shadow-md rounded-lg overflow-hidden transition-transform transform hover:scale-105"
           >
             <img
-              src={arrival.images[1]}
+              src={arrival.images[0]}
               alt={arrival.title}
               className="w-full h-48 object-cover"
             />
@@ -46,3 +46,4 @@ function ArrivalsCard() {
 }
 
 export default ArrivalsCard;
+

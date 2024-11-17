@@ -17,15 +17,15 @@ const CategoryMenu = () => {
     <section className="container mx-auto py-12">
       <h2 className="text-2xl font-bold mb-6">Most Rated</h2>
       <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-      {products.map(product => (
+      {products.slice(0, 8).map(product => (
           <ProductCard
 
             key={product._id} // Unique identifier for each product
             title={product.categories} // Product name
             price={product.price} // Product price
-            image={product.images} // Product image URL
+            image={product.images[0]} // Product image URL
             description={product.description}
-            stock={product.instock}
+            stock={product.quantity}
             id={product._id}
           />
         ))}
