@@ -39,9 +39,9 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
       userId: req.user._id,
       cartItem: [{
         productId: productId,
-        producttitle: req.body.cartItem[0].producttitle,
-        productColor: req.body.cartItem[0].productColor,
-        productSize: req.body.cartItem[0].productSize,
+        title: req.body.cartItem[0].producttitle,
+        color: req.body.cartItem[0].productColor,
+        size: req.body.cartItem[0].productSize,
         quantity: req.body.cartItem[0].quantity,
         price: req.body.cartItem[0].price,
         totalProductDiscount: req.body.cartItem[0].totalProductDiscount
@@ -62,9 +62,9 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
   } else {
     isCartExist.cartItem.push({
       productId: productId,
-      producttitle: req.body.cartItem[0].producttitle,
-      productColor: req.body.cartItem[0].productColor,
-      productSize: req.body.cartItem[0].productSize,
+      title: req.body.cartItem[0].producttitle,
+      color: req.body.cartItem[0].productColor,
+      size: req.body.cartItem[0].productSize,
       quantity: req.body.cartItem[0].quantity,
       price: req.body.cartItem[0].price,
       totalProductDiscount: req.body.cartItem[0].totalProductDiscount
