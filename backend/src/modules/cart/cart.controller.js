@@ -40,6 +40,8 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
       cartItem: [{
         productId: productId,
         producttitle: req.body.cartItem[0].producttitle,
+        productColor: req.body.cartItem[0].productColor,
+        productSize: req.body.cartItem[0].productSize,
         quantity: req.body.cartItem[0].quantity,
         price: req.body.cartItem[0].price,
         totalProductDiscount: req.body.cartItem[0].totalProductDiscount
@@ -61,6 +63,8 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
     isCartExist.cartItem.push({
       productId: productId,
       producttitle: req.body.cartItem[0].producttitle,
+      productColor: req.body.cartItem[0].productColor,
+      productSize: req.body.cartItem[0].productSize,
       quantity: req.body.cartItem[0].quantity,
       price: req.body.cartItem[0].price,
       totalProductDiscount: req.body.cartItem[0].totalProductDiscount
