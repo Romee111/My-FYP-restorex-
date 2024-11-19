@@ -14,74 +14,6 @@ function calcTotalPrice(cart) {
   cart.totalPrice = totalPrice;
 }
 
-// Add product to cart
-// const addProductToCart = catchAsyncError(async (req, res, next) => {
-//   // Ensure the productId is a valid ObjectId
-//   let product_id = req.body.productId;
-  
-//   try {
-//     productId = mongoose.Types.ObjectId(req.body.productId); // Convert to ObjectId
-//   } catch (err) {
-//     return next(new AppError("Invalid Product ID format", 400));
-//   }
-
-//   // Search for the product by ID
-//   let product = await productModel
-//     .findById(productId)
-//     .select("price");
-
-//   // If the product is not found, return an error
-//   if (!product) {
-//     return next(new AppError("Product was not found", 404));
-//   }
-
-//   // Set the price from the product found
-//   req.body.price = product.price;
-
-//   // Check if the cart exists for the user
-//   let isCartExist = await cartModel.findOne({
-//     userId: req.user._id,
-//   });
-
-//   // If cart doesn't exist, create a new cart with the product
-//   if (!isCartExist) {
-//     let result = new cartModel({
-//       userId: req.user._id,
-//       cartItem: [req.body],
-//     });
-//     calcTotalPrice(result);
-//     await result.save();
-//     return res.status(201).json({ message: "success", result });
-//   }
-
-//   // If the cart exists, check if the product already exists in the cart
-//   let item = isCartExist.cartItem.find((element) => {
-//     return element.productId.toString() === req.body.productId;
-//   });
-
-//   if (item) {
-//     // If the item exists, update the quantity
-//     item.quantity += req.body.quantity || 1;
-//   } else {
-//     // If the item doesn't exist, add it to the cart
-//     isCartExist.cartItem.push(req.body);
-//   }
-
-//   // Recalculate the total price
-//   calcTotalPrice(isCartExist);
-
-//   // Apply discount if exists
-//   if (isCartExist.discount) {
-//     isCartExist.totalPriceAfterDiscount =
-//       isCartExist.totalPrice - (isCartExist.totalPrice * isCartExist.discount) / 100;
-//   }
-
-//   // Save the updated cart
-//   await isCartExist.save();
-
-//   // Return the updated cart
-//   res.status(201).json({ message: "success", result: isCartExist });
-// });
 const addProductToCart = catchAsyncError(async (req, res, next) => {
   let productId = req.body.cartItem[0].productId;
 
@@ -146,20 +78,46 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
 
 
 // Remove product from cart
+// const removeProductFromCart = catchAsyncError(async (req, res, next) => {
+//   let result = await cartModel.findOneAndUpdate(
+//     { userId: req.user._id },
+//     { $pull: { cartItem: { _id: req.params.id } } },
+//     { new: true }
+//   );
+//   if (!result) return next(new AppError("Item was not found", 404));
+//   calcTotalPrice(result);
+//   if (result.discount) {
+//     result.totalPriceAfterDiscount =
+//       result.totalPrice - (result.totalPrice * result.discount) / 100;
+//   }
+//   res.status(200).json({ message: "success", cart: result });
+// });
 const removeProductFromCart = catchAsyncError(async (req, res, next) => {
+  const productId = new mongoose.Types.ObjectId(req.params.id); // Convert string to ObjectId
+   
   let result = await cartModel.findOneAndUpdate(
     { userId: req.user._id },
-    { $pull: { cartItem: { _id: req.params.id } } },
+    { $pull: { cartItem: { _id: req.params.id } } },
+    // { $pull: { cartItem: { productId: productId } } }, // Use ObjectId in the query
     { new: true }
   );
+
+  console.log("Updated Cart Items:", result?.cartItem);
+  console.log("Product ID to Remove:", productId);
+
   if (!result) return next(new AppError("Item was not found", 404));
+
   calcTotalPrice(result);
+
   if (result.discount) {
     result.totalPriceAfterDiscount =
       result.totalPrice - (result.totalPrice * result.discount) / 100;
   }
+
   res.status(200).json({ message: "success", cart: result });
 });
+
+
 
 // Update product quantity in the cart
 const updateProductQuantity = catchAsyncError(async (req, res, next) => {
@@ -178,6 +136,7 @@ const updateProductQuantity = catchAsyncError(async (req, res, next) => {
     isCartExist.totalPriceAfterDiscount =
       isCartExist.totalPrice - (isCartExist.totalPrice * isCartExist.discount) / 100;
   }
+  await isCartExist.markModified("cartItem");
   await isCartExist.save();
 
   res.status(201).json({ message: "success", cart: isCartExist });

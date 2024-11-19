@@ -1,10 +1,94 @@
 import axios from "axios";
 import { OrderModel } from "../../../Database/models/order.model.js";
 import { cartModel } from "../../../Database/models/cart.model.js";
+import bSecure from "bsecure";
+const BSECURE_BASE_URL = 'https://api.bsecure.pk/v1/orders/create';
 
-const BSECURE_BASE_URL = process.env.BSECURE_BASE_URL;
-const CLIENT_ID = process.env.BSECURE_CLIENT_ID;
-const CLIENT_SECRET = process.env.BSECURE_CLIENT_SECRET;
+let bsecure = new bSecure({
+  client_id: "2ddd3f60-cf2e-4940-a9e6-80a0f31bb430",
+  client_secret: "RQe7WOtDD/GGKKDLEHzcqHQs/vpuyGM9n/SVrgl1R7M=",
+  environment: "live",
+});
+ export const getAccessToken = async () => {
+  try {
+    const token = await bsecure.authorize();
+    console.log(token);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const createOrder = async (req, res) => {
+  try {
+    const { userId, cartId, shippingAddress, paymentMethod, CNIC } = req.body;
+
+    // Validate required fields
+    if (!userId || !cartId || !shippingAddress || !paymentMethod) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Fetch cart details
+    const cart = await cartModel.findById(cartId).populate('cartItem.product_id'); // Ensure cartItems are populated
+    console.log(cart);
+    
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+    }
+   
+    const totalAmount = cart.totalPrice;
+
+    // Prepare bSecure order payload
+    const bSecureOrderData = {
+      order_id: cart._id.toString(), // Unique order ID from your system
+      order_amount: totalAmount,
+      customer: {
+        name: "Customer Name", // Replace with actual customer data
+        email: "customer@example.com", // Replace with actual email
+        phone: shippingAddress.phone,
+      },
+      return_url: 'https://yourstore.com/order/return', // Replace with your return URL
+      notification_url: 'https://yourstore.com/order/notification', // Replace with your listener URL
+      items: cart.cartItem?.map((item) => ({
+        name: item?.productName, // Assuming productName exists in your product schema
+        sku: item?.product_id?.toString(),
+        price: item.price,
+        quantity: item.quantity,
+      })),
+    };
+
+    // Fetch the access token
+    const accessToken = await getAccessToken();
+
+    // Make a request to bSecure API
+    const response = await fetch('https://api.bsecure.pk/v1/orders/create', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(bSecureOrderData),
+    });
+
+    const bSecureResponse = await response.json();
+
+    if (!response.ok) {
+      console.error('bSecure API Error:', bSecureResponse);
+      return res
+        .status(500)
+        .json({ message: 'Failed to create order on bSecure', error: bSecureResponse });
+    }
+
+    // Respond with both local and bSecure order data
+    res.status(201).json({
+      message: 'Order created successfully',
+      bSecureOrder: bSecureResponse,
+    });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 
 // // Helper: Get Access Token
 // const getAccessToken = async () => {
@@ -65,32 +149,78 @@ const CLIENT_SECRET = process.env.BSECURE_CLIENT_SECRET;
 //     console.error("Failed to retrieve token:", error.message);
 //   });
 
-const getAccessToken = async () => {
-  try {
-    const response = await axios.post(
-      ${process.env.API_BASE_URL}/v1/oauth/token,
-      new URLSearchParams({
-        grant_type: "client_credentials",
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
-    );
+//  export const getAccessToken = async () => {
+//   try {
+//     const response = await axios.post(
+//       `${process.env.API_BASE_URL}/oauth/token`,
+//       console.log(process.env.API_BASE_URL),
+//       console.log(process.env.CLIENT_ID),
+//       console.log(process.env.CLIENT_SECRET),
+      
+      
+//       new URLSearchParams({
+//         grant_type: "client_credentials",
+//         client_id: process.env.CLIENT_ID,
+//         client_secret: process.env.CLIENT_SECRET,
+//       }),
+//       console.log("Request Body:", params.toString()),
+      
+//       {
+//         headers: {
+//           "Content-Type": "application/x-www-form-urlencoded",
+//         },
+//       }
+//     );
 
-    if (response.data && response.data.access_token) {
-      return response.data.access_token;
-    } else {
-      throw new Error("Failed to generate access token");
-    }
-  } catch (error) {
-    console.error("Error generating access token:", error.response?.data || error.message);
-    throw new Error("Authentication failed");
-  }
-}
+//     if (response.data && response.data.access_token) {
+//       return response.data.access_token;
+//     } else {
+//       throw new Error("Failed to generate access token");
+//     }
+//   } catch (error) {
+//     console.error("Error generating access token:", error.response?.data || error.message);
+//     throw new Error("Authentication failed");
+//   }
+// }
+
+//  export const getAccessToken = async () => {
+//   try {
+//     // Log environment variables
+//     console.log("API_BASE_URL:", process.env.API_BASE_URL);
+//     console.log("CLIENT_ID:", process.env.CLIENT_ID);
+//     console.log("CLIENT_SECRET:", process.env.CLIENT_SECRET);
+
+//     const params = new URLSearchParams({
+//       grant_type: "client_credentials",
+//       client_id: process.env.CLIENT_ID,
+//       client_secret: process.env.CLIENT_SECRET,
+//     });
+
+//     // Log the request body
+//     console.log("Request Body:", params.toString());
+
+//     const response = await axios.post(
+//       `${process.env.API_BASE_URL}/v1/oauth/token`,
+//       params,
+//       {
+//         headers: {
+//           "Content-Type": "application/x-www-form-urlencoded",
+//         },
+//       }
+//     );
+
+//     if (response.data && response.data.access_token) {
+//       return response.data.access_token;
+//     } else {
+//       throw new Error("Failed to generate access token");
+//     }
+//   } catch (error) {
+//     console.error("Error generating access token:", error.response?.data || error.message);
+//     throw new Error("Authentication failed");
+//   }
+// };
+
+
 
 
 // // Helper: Validate Payment via API
@@ -107,7 +237,7 @@ export const validatePayment = async (transactionId) => {
     return response.data; // Returns the validated payment details
   } catch (error) {
     console.error("Error validating payment:", error.response?.data || error.message);
-    throw new Error("Payment validation failed");
+    // throw new Error("Payment validation failed");
   }
 };
 

@@ -5,6 +5,19 @@ import * as order from     "./order.controller.js"
 const orderRouter = express.Router();
 
  orderRouter
+ .route("/getAccessToken")
+ .post(
+   order.getAccessToken
+ )
+
+ orderRouter
+  .route("/createOrder")
+  .post(
+   
+    order.createOrder
+  )
+
+ orderRouter
   .route("/processPayment")
   .post(
     protectedRoutes,
