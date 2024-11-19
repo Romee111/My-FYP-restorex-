@@ -20,7 +20,38 @@ const productSchema = new Schema(
     images: {
       type: [String],
     },
-    description: {
+    price: {
+      type: Number,
+      required: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+    },
+    discount: {
+      type: Number,
+      default: 0,
+    },
+    totalProductDiscount: {
+      type: Number,
+      default: 0,
+    },
+    rating: {
+      type: Number,
+      default: 0,
+    },
+    totalRating: {
+      type: Number,
+      default: 0,
+    },
+    color: {
+      type: [String],
+    },
+    size: {
+      type: [String],
+    },
+ 
+     discription: {
       type: String,
       maxlength: [100, "Description should be less than or equal to 100"],
       minlength: [10, "Description should be more than or equal to 10"],
@@ -35,6 +66,10 @@ const productSchema = new Schema(
        type: mongoose.Schema.Types.ObjectId,
     ref: 'subcategory'
 
+    },
+    brands: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "brand",
     }
     // other fields...
   },

@@ -19,9 +19,9 @@ const categorySchema = new Schema(
   },
   { timestamps: true }
 );
-categorySchema.post('init',function(doc){
-  doc.Image = `${process.env.BASE_URL}category/${doc.Image}`
-  console.log(doc);
+// categorySchema.post('init',function(doc){
+//   doc.Image = `${process.env.BASE_URL}category/${doc.Image}`
+//   console.log(doc);
 
-})
+// })
 export const categoryModel = model("category", categorySchema);

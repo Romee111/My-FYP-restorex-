@@ -12,10 +12,7 @@ const orderSchema = new Schema({
   userId: { type: Schema.ObjectId, required: true, ref: 'user' },
   
 
-//     productId: { type: Schema.ObjectId, required: true, ref: 'product' },
-//     quantity: { type: Number, required: true },
 
-//  } ],
        cartId: { type: Schema.ObjectId, required: true, ref: 'cart' }, 
 shippingAddress: {
     street: String,

@@ -1,215 +1,354 @@
-import { cartModel } from '../../../Database/models/cart.model.js';
-import { productModel } from '../../../Database/models/product.model.js';
-import { OrderModel } from '../../../Database/models/order.model.js';
-import nodemailer from 'nodemailer';
-import { get } from 'mongoose';
+import axios from "axios";
+import { OrderModel } from "../../../Database/models/order.model.js";
+import { cartModel } from "../../../Database/models/cart.model.js";
 
+const BSECURE_BASE_URL = process.env.BSECURE_BASE_URL;
+const CLIENT_ID = process.env.BSECURE_CLIENT_ID;
+const CLIENT_SECRET = process.env.BSECURE_CLIENT_SECRET;
 
-export async function createOrder(req, res) {
-  const {cartId, shippingAddress, paymentMethod, totalAmount, CNIC, installmentPeriod, userEmail,zip} = req.body
+// // Helper: Get Access Token
+// const getAccessToken = async () => {
+//   try {
+//     const response = await axios.post( BSECURE_BASE_URL, {
+//       grant_type: "client_credentials",
+//       client_id: CLIENT_ID,
+//       client_secret: CLIENT_SECRET,
+//     });
 
-  // Fetch the cart data using the cartI
-  
-  const cartData = await cartModel.findOne({_id: cartId });
-  console.log(cartData,"cartdata");
-  
+//     if (response.data && response.data.access_token) {
+//       return response.data.access_token;
+//     } else {
+//       throw new Error("Failed to generate access token");
+//     }
+//   } catch (error) {
+//     console.error("Error generating access token:", error.response?.data || error.message);
+//     throw new Error("bSecure authentication failed");
+//   }
+// };
+// const getAccessToken = async () => {
+//   try {
+//     // Making the request to bSecure's token endpoint
+//     const response = await axios.post(
+//       BSECURE_BASE_URL,
+//       new URLSearchParams({
+//         grant_type: "client_credentials",  // OAuth 2.0 Client Credentials flow
+//         client_id: CLIENT_ID,
+//         client_secret: CLIENT_SECRET,
+//       }),
+//       {
+//         headers: {
+//           "Content-Type": "application/x-www-form-urlencoded",  // Ensure proper content type for OAuth
+//         },
+//       }
+//     );
 
-  if (!cartData) {
-    res.json("Cart not found.");
-  }
+//     // Check if the token is in the response
+//     if (response.data && response.data.access_token) {
+//       console.log('Access Token:', response.data.access_token);
+//       return response.data.access_token;  // Return the access token
+//     } else {
+//       throw new Error('Failed to generate access token');
+//     }
+//   } catch (error) {
+//     console.error("Error generating access token:", error.response?.data || error.message);
+//     throw new Error('bSecure authentication failed');
+//   }
+// };
 
-  const userId = cartData.userId; // Extract userId from the cart data
-  const productIds = cartData.cartItem.map(item => item.productId); // Extract product IDs from cart items
+// Example usage
+// getAccessToken()
+//   .then((token) => {
+//     // You can use the token for further requests
+//     console.log("Successfully received access token:", token);
+//   })
+//   .catch((error) => {
+//     console.error("Failed to retrieve token:", error.message);
+//   });
 
-  // Ensure the cart's totalAmount matches the incoming totalAmount
-  // if (cartData.totalPrice !== totalAmount) {
-  //   res.json("Total amount mismatch.");
-  // }  temporary
-console.log(productIds,"productIds Array")
-  // Fetch the product data for cart items
-  const products = await productModel.find({ _id: { $in: productIds } });
-console.log(products,"products")
-  if (products.length !== cartData.cartItem.length) {
-    res.json("One or more products not found.");
-  }
+const getAccessToken = async () => {
+  try {
+    const response = await axios.post(
+      ${process.env.API_BASE_URL}/v1/oauth/token,
+      new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
 
-  let newOrder;
-
-  if (paymentMethod === 'card' || paymentMethod === 'cash') {
-// Map cart items to include each product's payment_URL
-const orderItems = cartData.cartItem.map(item => {
-  const product = products.find(product => product._id.toString() === item.productId.toString());
-  return {
-    productId: item.productId,
-    quantity: item.quantity,
-    payment_URL: product.payment_URL // Use the product's payment_URL
-  };
-});
-
-console.log(orderItems,"orderItems")
-
-newOrder = new OrderModel({
-  userId,  // userId is extracted from cartData
-  cartId,  // cartId is stored as a reference
-  //  orderItems,
-  shippingAddress,
-  paymentMethod,
-  totalAmount,
-  isPaid: false,
-  isDelivered: false
-})
-
-await newOrder.save()
-    console.log(newOrder, "newOrder Created");
-
-    const emailSent = await sendOrderConfirmationEmail(userEmail, newOrder);
-    if (emailSent) {
-      return res.json({
-        message: "Order Placed Successfully",
-        order: newOrder,
-        paymentRedirectURL: cartData.cartItem[0].payment_URL
-      });
+    if (response.data && response.data.access_token) {
+      return response.data.access_token;
     } else {
-      return res.json({ message: "Order placed, but error sending email." , order: newOrder});
+      throw new Error("Failed to generate access token");
     }
+  } catch (error) {
+    console.error("Error generating access token:", error.response?.data || error.message);
+    throw new Error("Authentication failed");
   }
+}
 
-  // Handle installment payment method
-  if (paymentMethod === 'installment') {
-    if (totalAmount < 30000) {
-      res.json("Installments are only available for orders over 30,000.");
-    }
 
-    if (!CNIC) {
-      res.json("CNIC is required for installment payments.");
-    }
+// // Helper: Validate Payment via API
+export const validatePayment = async (transactionId) => {
+  const token = await getAccessToken();
 
-    let installments = [];
-    let installmentAmount = totalAmount / installmentPeriod;
+  try {
+    const response = await axios.get(`${BSECURE_BASE_URL}/payments/${transactionId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-    for (let i = 1; i <= installmentPeriod; i++) {
-      let dueDate = new Date();
-      dueDate.setMonth(dueDate.getMonth() + i);
+    return response.data; // Returns the validated payment details
+  } catch (error) {
+    console.error("Error validating payment:", error.response?.data || error.message);
+    throw new Error("Payment validation failed");
+  }
+};
 
-      installments.push({
-        installmentNumber: i,
-        amount: installmentAmount,
-        dueDate: dueDate,
-        payment_URL: products[0].payment_URL // Use the product's payment_URL for each installment
-      });
-    }
-  
-      
-    newOrder = new OrderModel({
-      userId,  // userId is extracted from cartData
-      cartId,  // cartId is stored as a reference
+// 1. Process Payment
+export const processPayment = async (req, res) => {
+  const { cartId, paymentMethod, cnic, shippingAddress } = req.body;
+
+  try {
+    // Fetch cart and user details, now populating productId as well
+    const cart = await cartModel.findById(cartId).populate('cartItem.productId').populate('userId').lean();
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
+
+    const customer = {
+      name: cart.userId.name,
+      email: cart.userId.email,
+      phone_number: cart.userId.phoneNumber,
+    };
+
+    // Calculate totalAmount first before proceeding
+    let totalAmount = 0;
+    totalAmount = cart.cartItem.reduce((sum, item) => {
+      const price = item.productId?.price || 0;  // Fallback to 0 if price is missing
+      const quantity = item.quantity || 0;     // Fallback to 0 if quantity is missing
+
+      // Log item details for debugging
+      console.log("Item:", item);
+      console.log("Item Price:", price, "Item Quantity:", quantity);
+
+      // Check if price or quantity is invalid
+      if (typeof price !== "number" || typeof quantity !== "number" || price <= 0 || quantity <= 0) {
+        console.error("Invalid price or quantity detected:", item);
+        return sum; // Skip this item and continue with the next
+      }
+
+      return sum + price * quantity;
+    }, 0);
+
+    // Log totalAmount for debugging
+    console.log("Total Amount:", totalAmount);
+
+    // Check if totalAmount is valid
+    // if (isNaN(totalAmount) || totalAmount <= 0) {
+    //   throw new Error("Invalid totalAmount calculated");
+    // }
+
+    // Now that totalAmount is calculated, create the order
+    const newOrder = new OrderModel({
+      userId: cart.userId._id,
+      cartId: cart._id,
       shippingAddress,
       paymentMethod,
       totalAmount,
-      CNIC,
-      Installments: installments,
-      isPaid: false,
-      isDelivered: false
+      ...(paymentMethod === "installment" && { CNIC: cnic }),
+      Installments: paymentMethod === "installment" ? generateInstallments(totalAmount) : [],
     });
-
 
     await newOrder.save();
 
-    const emailSent = await sendOrderConfirmationEmail(userEmail, newOrder);
-    if (emailSent) {
-      return res.json({
-        message: "Order Placed Successfully",
-        order: newOrder,
-        paymentRedirectURL: installments[0].payment_URL
+    // Prepare payment payload
+    const payload = {
+      order_id: newOrder._id.toString(),
+      amount: newOrder.totalAmount, // Ensure we're using the initialized totalAmount
+      currency: "PKR",
+      customer,
+      items: cart.cartItem.map((item) => ({
+        name: item.productId.name,
+        unit_price: item.productId.price,
+        quantity: item.quantity,
+      })),
+      payment: {
+        method: paymentMethod,
+        ...(paymentMethod === "installment" && { cnic }),
+      },
+    };
+
+    // Initialize payment
+    const token = await getAccessToken();
+    console.log("Access Token:", token); // Log token for debugging
+    const response = await axios.post(`${BSECURE_BASE_URL}/payments`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (response.data && response.data.redirect_url) {
+      res.status(200).json({
+        message: "Payment initialized successfully",
+        orderId: newOrder._id,
+        redirectUrl: response.data.redirect_url, // Redirect to payment gateway
       });
     } else {
-      return res.json({ message: "Order placed, but error sending email." });
+      throw new Error("Failed to initialize payment");
     }
+  } catch (error) {
+    console.error("Error processing payment:", error.message);
+    res.status(500).json({ message: "Payment processing failed", error: error.message });
   }
-
-  res.json("Invalid payment method.");
-}
+};
 
 
-
-// Function to send order confirmation email
-// Function to send order confirmation email
-async function sendOrderConfirmationEmail(userEmail, order) {
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASSWORD
-    }
-  });
-
-  const cartItems = await cartModel.findById(order.cartId).lean().exec();
-  let orderDetails = '';
-
-  for (let item of cartItems.cartItem) {
-    const totalAmount = item.quantity * order.totalAmount;
-    orderDetails += `${item.quantity} x ${item.productId} (Total: ${totalAmount})\n`;
-  }
-
-  const mailOptions = {
-    from: process.env.EMAIL,
-    to: userEmail,
-    subject: 'Order Confirmation - Your Order has been Placed',
-    text: `Dear Customer,
-
-    Your order has been successfully placed! Here are your order details:
-    
-    Order ID: ${order._id}
-    Payment Method: ${order.paymentMethod}
-    Shipping Address: ${order.shippingAddress.street}, ${order.shippingAddress.city}, ${order.shippingAddress.phone}
-    
-    Items:
-    ${orderDetails}
-    
-    Total Amount: ${order.totalAmount}
-    
-    Thank you for shopping with us! Your order will be processed soon.
-
-    Regards,
-    The Team`
-  };
+// 2. Payment Webhook
+export const paymentWebhook = async (req, res) => {
+  const { order_id, transaction_id, status } = req.body;
 
   try {
-    await transporter.sendMail(mailOptions);
-    console.log('Order confirmation email sent successfully!');
-    return true;
+    const order = await OrderModel.findById(order_id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    if (status === "success") {
+      order.paymentStatus = "paid";
+      order.transactionId = transaction_id;
+    } else {
+      order.paymentStatus = "failed";
+    }
+
+    await order.save();
+    res.status(200).json({ message: "Payment status updated successfully" });
   } catch (error) {
-    console.error('Error sending email:', error);
-    return false;
+    console.error("Error processing webhook:", error.message);
+    res.status(500).json({ message: "Webhook processing failed" });
   }
-}
+};
 
-export async function  getOrders(req, res) {
-  const orders = await OrderModel.find().populate('userId');
-  res.json(orders);
-}
-   export async function getSingleOrder(req, res) {
-    const { id } = req.params;
-    const order = await OrderModel.findById(id).populate('userId').populate('cartId').populate('Installments.productId');
-    res.status(201).json(
-      {
-        message: "success",
-        order: order
-      }
-    )
+// 3. Redirect Callback
+export const paymentCallback = async (req, res) => {
+  const { order_id, status, transaction_id } = req.query;
+
+  try {
+    const order = await OrderModel.findById(order_id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    if (status === "success") {
+      order.paymentStatus = "paid";
+      order.transactionId = transaction_id;
+    } else {
+      order.paymentStatus = "failed";
+    }
+
+    await order.save();
+
+    // Redirect to a user-friendly status page
+    res.redirect(`/payment-status?orderId=${order_id}&status=${status}`);
+  } catch (error) {
+    console.error("Error processing callback:", error.message);
+    res.status(500).json({ message: "Callback processing failed" });
   }
+};
 
+// Helper: Generate Installments
+ const generateInstallments = (totalAmount) => {
+  const numInstallments = 6;
+  const installmentAmount = totalAmount / numInstallments;
 
-  export async function cancelOrder(req, res) {
-    const { id } = req.params;
-    const order = await OrderModel.findByIdAndDelete(id);
-    res.json(order);
+  return Array.from({ length: numInstallments }, (_, index) => ({
+    installmentNumber: index + 1,
+    amount: Math.ceil(installmentAmount),
+    dueDate: new Date(Date.now() + index * 30 * 24 * 60 * 60 * 1000),
+    status: "pending",
+  }));
+};
+
+export const getOrdersForSeller = async (req, res) => {
+  const { sellerId } = req.params;  // Extract the sellerId from request parameters
+
+  try {
+    // Find orders where the products in the cart have a createdBy field matching the sellerId
+    const orders = await OrderModel.find({
+      'cartId.products.createdBy': sellerId,  // Ensure 'products.createdBy' matches the sellerId
+    }).populate('cartId');  // Optional: populate cartId if you want to retrieve cart details along with the order
+
+    if (orders.length === 0) {
+      return res.status(404).json({ message: "No orders found for this seller" });
+    }
+
+    res.status(200).json({
+      message: "Orders retrieved successfully for the seller",
+      orders,
+    });
+  } catch (error) {
+    console.error("Error retrieving seller orders:", error.message);
+    res.status(500).json({ message: "Error retrieving seller orders", error: error.message });
   }
-   export async  function updateOrder(req, res) {
-    const { id } = req.params;
-    const order = await OrderModel.findByIdAndUpdate(id, req.body, { new: true });
-    res.json(order);
-  }
+};
 
-  
+
+export const cancelOrder = async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    const order = await OrderModel.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.paymentStatus === "paid") {
+      return res.status(400).json({ message: "Cannot cancel a paid order" });
+    }
+
+    order.status = "cancelled";
+    await order.save();
+
+    res.status(200).json({ message: "Order cancelled successfully", order });
+  } catch (error) {
+    console.error("Error cancelling order:", error.message);
+    res.status(500).json({ message: "Error cancelling order", error: error.message });
+  }
+};
+
+// Get All Orders
+export const getAllOrders = async (req, res) => {
+  try {
+    const orders = await OrderModel.find().populate("userId").populate("cartId");
+
+    res.status(200).json({
+      message: "Orders retrieved successfully",
+      orders,
+    });
+  } catch (error) {
+    console.error("Error retrieving orders:", error.message);
+    res.status(500).json({ message: "Error retrieving orders", error: error.message });
+  }
+};
+
+// Get Order by ID
+export const getOrderById = async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    const order = await OrderModel.findById(orderId)
+      .populate("userId")
+      .populate("cartId");
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.status(200).json({ message: "Order retrieved successfully", order });
+  } catch (error) {
+    console.error("Error retrieving order:", error.message);
+    res.status(500).json({ message: "Error retrieving order", error: error.message });
+  }
+};

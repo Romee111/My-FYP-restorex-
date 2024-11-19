@@ -7,7 +7,7 @@ import { productModel } from "./../../../Database/models/product.model.js";
 import { ApiFeatures } from "../../utils/ApiFeatures.js";
 
 
-//   try {
+// //   try {
 //     // If you're using file uploads (like with multer)
 //     // req.body.imgCover = req.files.imgCover[0].filename;
 //     // req.body.images = req.files.images.map((ele) => ele.filename);
@@ -101,7 +101,7 @@ const newArrivals=catchAsyncError(async(req,res,next)=>{
 });
 
 const getProducts=catchAsyncError(async(req,res,next)=>{
-  const getProducts=await productModel.find().populate('category').populate('subcategory');
+  const getProducts=await productModel.find().populate('category').populate('subcategory').populate('brand');
   res.status(201).json({message:"success",getProducts})  
 } 
     
@@ -203,4 +203,6 @@ export {
    getSellerProducts,
    updateSellerProduct,
    deleteSellerProduct,
-  };
+   };
+
+
