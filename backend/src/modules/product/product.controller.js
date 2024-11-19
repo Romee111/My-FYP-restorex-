@@ -71,8 +71,9 @@ const getSellerProducts = async (req, res, next) => {
 
 const getAllProducts = catchAsyncError(async (req, res, next) => {
   console.log(req.query);
+  const totalResults=await productModel.find().countDocuments();
   
-  let apiFeature = new ApiFeatures(productModel.find(), req.query)
+  let apiFeature = new ApiFeatures(productModel.find().populate('category').populate('subcategory').populate('brand'), req.query)
     .pagination()
     .limit()
     .fields()
@@ -86,7 +87,7 @@ const getAllProducts = catchAsyncError(async (req, res, next) => {
   
   const PAGE_NUMBER = apiFeature.queryString.page * 1 || 1;
 
-  res.status(201).json({ page: PAGE_NUMBER, message: "success", getAllProducts });
+  res.status(201).json({ page: PAGE_NUMBER, message: "success", getAllProducts,totalResults });
 });
 
  const getProductsById=catchAsyncError(async(req,res,next)=>{
