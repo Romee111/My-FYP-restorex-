@@ -73,7 +73,7 @@ const getAllProducts = catchAsyncError(async (req, res, next) => {
   console.log(req.query);
   const totalResults=await productModel.find().countDocuments();
   
-  let apiFeature = new ApiFeatures(productModel.find().populate('category').populate('subcategory').populate('brand'), req.query)
+  let apiFeature = new ApiFeatures(productModel.find().populate('category').populate('subcategory'), req.query)
     .pagination()
     .limit()
     .fields()
@@ -102,7 +102,7 @@ const newArrivals=catchAsyncError(async(req,res,next)=>{
 });
 
 const getProducts=catchAsyncError(async(req,res,next)=>{
-  const getProducts=await productModel.find().populate('category').populate('subcategory').populate('brand');
+  const getProducts=await productModel.find().populate('category').populate('subcategory');
   res.status(201).json({message:"success",getProducts})  
 } 
     
