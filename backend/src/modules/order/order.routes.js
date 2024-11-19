@@ -4,11 +4,11 @@ import { allowedTo, protectedRoutes } from "../auth/auth.controller.js";
 import * as order from     "./order.controller.js"
 const orderRouter = express.Router();
 
- orderRouter
- .route("/getAccessToken")
- .post(
-   order.getAccessToken
- )
+//  orderRouter
+//  .route("/getAccessToken")
+//  .post(
+//    order.getAccessToken
+//  )
 
  orderRouter
   .route("/createOrder")

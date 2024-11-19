@@ -4,19 +4,6 @@ import { cartModel } from "../../../Database/models/cart.model.js";
 import bSecure from "bsecure";
 const BSECURE_BASE_URL = 'https://api.bsecure.pk/v1/orders/create';
 
-let bsecure = new bSecure({
-  client_id: "2ddd3f60-cf2e-4940-a9e6-80a0f31bb430",
-  client_secret: "RQe7WOtDD/GGKKDLEHzcqHQs/vpuyGM9n/SVrgl1R7M=",
-  environment: "live",
-});
- export const getAccessToken = async () => {
-  try {
-    const token = await bsecure.authorize();
-    console.log(token);
-  } catch (error) {
-    console.error(error);
-  }
-};
 
 export const createOrder = async (req, res) => {
   try {
