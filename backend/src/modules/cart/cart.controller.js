@@ -37,7 +37,7 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
   if (!isCartExist) {
     let result = new cartModel({
       userId: req.user._id,
-      cartItem: [{
+      cartItem: [{  
         productId: productId,
         title: req.body.cartItem[0].producttitle,
         color: req.body.cartItem[0].productColor,

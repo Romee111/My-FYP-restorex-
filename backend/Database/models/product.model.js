@@ -53,49 +53,36 @@ const productSchema = new Schema(
  
      description: {
       type: String,
-      maxlength: [100, "Description should be less than or equal to 100"],
+      maxlength: [200, "Description should be less than or equal to 200"],
       minlength: [10, "Description should be more than or equal to 10"],
       required: true,
       trim: true,
     },
-    category:{
-       type: mongoose.Schema.Types.ObjectId,
-    ref: 'category'
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "category",
     },
-    subcategory:{
-       type: mongoose.Schema.Types.ObjectId,
-    ref: 'subcategory'
-
+    subcategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "subcategory",
     },
     brands: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "brand",
     },
+
     imagesArray: {
       imageURL: [String],
       ImageColor: [String],
       ImageSize: [String],
 
     }
+
     // other fields...
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
-// Middleware to format image URLs
-// productSchema.post("init", function (doc) {
-//   // Format imgCover if it's not an external URL
-//   if (doc.imgCover && !doc.imgCover.startsWith("http")) {
-//     doc.imgCover = `${process.env.BASE_URL}products/${doc.imgCover}`;
-//   }
-
-//   // Format each image in images if they're not external URLs
-//   if (doc.images && Array.isArray(doc.images)) {
-//     doc.images = doc.images.map((ele) =>
-//       ele.startsWith("http") ? ele : `${process.env.BASE_URL}products/${ele}`
-//     );
-//   }
-// });
 
 // Virtual for reviews
 productSchema.virtual("reviews", {
