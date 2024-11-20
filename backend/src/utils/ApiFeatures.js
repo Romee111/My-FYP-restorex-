@@ -22,16 +22,30 @@ export class ApiFeatures {
     return this;
   }
 
-  // Filteration
   filteration() {
     let filterObj = { ...this.queryString };
     let excludedQuery = ["page", "sort", "fields", "keyword", "limit"];
-    
+
     excludedQuery.forEach((ele) => {
       delete filterObj[ele];
     });
+
+    // Check for price range filter (price[lte] and price[gte])
+    if (filterObj.price) {
+      if (filterObj.price.gte || filterObj.price.lte) {
+        filterObj.price = {};
+        if (this.queryString["price[gte]"]) {
+          filterObj.price["$gte"] = this.queryString["price[gte]"];
+        }
+        if (this.queryString["price[lte]"]) {
+          filterObj.price["$lte"] = this.queryString["price[lte]"];
+        }
+      }
+    }
+
     filterObj = JSON.stringify(filterObj);
 
+    // Handle query operators (like gt, gte, lt, lte)
     filterObj = filterObj.replace(
       /\b(gt|gte|lt|lte)\b/g,
       (match) => `$${match}`
@@ -72,6 +86,5 @@ export class ApiFeatures {
     }
     return this;
   }
-priceBasedSize
-  
+  priceBasedSize;
 }
