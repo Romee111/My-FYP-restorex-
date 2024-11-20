@@ -50,27 +50,26 @@ const productSchema = new Schema(
     size: {
       type: [String],
     },
- 
-     discription: {
+
+    description: {
       type: String,
       maxlength: [100, "Description should be less than or equal to 100"],
       minlength: [10, "Description should be more than or equal to 10"],
       required: true,
       trim: true,
     },
-    category:{
-       type: mongoose.Schema.Types.ObjectId,
-    ref: 'category'
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "category",
     },
-    subcategory:{
-       type: mongoose.Schema.Types.ObjectId,
-    ref: 'subcategory'
-
+    subcategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "subcategory",
     },
     brands: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "brand",
-    }
+    },
     // other fields...
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }

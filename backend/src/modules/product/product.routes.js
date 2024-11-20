@@ -83,15 +83,15 @@ productRouter
   .route("/getProducts")
   .get(product.getProducts);
 
-// Route to update product by ID
-productRouter
-  .route("/updateProduct/:id")
-  .put(
-    protectedRoutes,
-    allowedTo("admin", "seller"),
-    validate(updateProductValidation),
-    product.updateProduct
-  );
+  // Route to update product by ID
+  productRouter
+    .route("/updateProduct/:id")
+    .put(
+      protectedRoutes,
+      allowedTo("admin", "seller"),
+      validate(updateProductValidation),
+      product.updateProduct
+    );
 
 // Route to delete product by ID
 productRouter

@@ -2,7 +2,7 @@ import { catchAsyncError } from "../../utils/catchAsyncError.js";
 import { AppError } from "../../utils/AppError.js";
 import { deleteOne } from "../../handlers/factor.js";
 import { ApiFeatures } from "../../utils/ApiFeatures.js";
-import  userModel  from "../../../Database/models/user.model.js";
+import userModel from "../../../Database/models/user.model.js";
 import bcrypt from "bcrypt";
 
 // const addUser = catchAsyncError(async (req, res, next) => {
@@ -42,7 +42,6 @@ const addUser = catchAsyncError(async (req, res, next) => {
   res.status(201).json({ message: "success", user: newUser });
 });
 
-
 // const getAllUsers = catchAsyncError(async (req, res, next) => {
 //   let apiFeature = new ApiFeatures(userModel.find(), req.query)
 //     .pagination()
@@ -70,7 +69,7 @@ const getAllUsers = catchAsyncError(async (req, res, next) => {
   const getAllUsers = await apiFeature.mongooseQuery;
 
   // Log the result to check if data is being fetched
-  console.log(getAllUsers);  // Check if data is returned
+  console.log(getAllUsers); // Check if data is returned
 
   // If no users are found, return a 404 or empty result
   if (getAllUsers.length === 0) {
@@ -84,7 +83,7 @@ const getAllUsers = catchAsyncError(async (req, res, next) => {
   res.status(200).json({
     page: PAGE_NUMBER,
     message: "success",
-    data: getAllUsers,  // Pass the result data in the 'data' field
+    data: getAllUsers, // Pass the result data in the 'data' field
   });
 });
 
@@ -123,6 +122,8 @@ const updateUser = catchAsyncError(async (req, res, next) => {
       }
     }
   }
+  
+  console.log(req.body);
 
   // Update the user information
   const updateUser = await userModel.findByIdAndUpdate(id, req.body, {
