@@ -71,12 +71,11 @@ const productSchema = new Schema(
       ref: "brand",
     },
 
-    imagesArray: {
-      imageURL: [String],
-      ImageColor: [String],
-      ImageSize: [String],
-
-    }
+    imagesArray: [
+      { images: { type: String },sizes: { type: String },colors: { type: String } },
+       { images: { type: String },sizes: { type: String },colors: { type: String } },
+       { images: { type: String },sizes: { type: String },colors: { type: String } }, 
+    ]
 
     // other fields...
   },
