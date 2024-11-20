@@ -28,6 +28,10 @@ productRouter
     // validate(addProductValidation),
     product.addProduct
   );
+   
+  productRouter
+  .route("/getSizesWithPrices")
+  .get(product.getSizesWithPrices);
 
 // Route to get products by the logged-in seller
 

@@ -90,6 +90,40 @@ const getAllProducts = catchAsyncError(async (req, res, next) => {
   res.status(201).json({ page: PAGE_NUMBER, message: "success", getAllProducts,totalResults });
 });
 
+
+const getSizesWithPrices = async (productId) => {
+  try {
+    // Fetch the product from the database
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return {
+        success: false,
+        message: "Product not found."
+      };
+    }
+
+    // Format sizes with their prices
+    const sizesWithPrices = Object.entries(product.sizes).map(([size, price]) => ({
+      size,
+      price
+    }));
+
+    return {
+      success: true,
+      title: product.title,
+      sizesWithPrices,
+      createdBy: product.createdBy // Optional: include the user who added the product
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Error occurred: ${error.message}`
+    };
+  }
+};
+
+
  const getProductsById=catchAsyncError(async(req,res,next)=>{
   const {id}=req.params
   const getProductsById=await productModel.findById(id)
@@ -204,6 +238,7 @@ export {
    getSellerProducts,
    updateSellerProduct,
    deleteSellerProduct,
+  getSizesWithPrices
    };
 
 

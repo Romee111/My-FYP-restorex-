@@ -72,4 +72,6 @@ export class ApiFeatures {
     }
     return this;
   }
+priceBasedSize
+  
 }
