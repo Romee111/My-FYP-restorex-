@@ -51,7 +51,7 @@ const productSchema = new Schema(
       type: [String],
     },
  
-     discription: {
+     description: {
       type: String,
       maxlength: [100, "Description should be less than or equal to 100"],
       minlength: [10, "Description should be more than or equal to 10"],

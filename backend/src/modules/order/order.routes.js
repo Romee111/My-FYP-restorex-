@@ -13,33 +13,34 @@ const orderRouter = express.Router();
  orderRouter
   .route("/createOrder")
   .post(
-   
-    order.createOrder
-  )
-
- orderRouter
-  .route("/processPayment")
-  .post(
     protectedRoutes,
     allowedTo("user"),
-    order.processPayment
+   order.createOrder
   )
 
-  orderRouter
-  .route("/paymentWebhook")
-  .post(
-    protectedRoutes,
-    allowedTo("user","admin","seller"),
-    order.paymentWebhook
-  )
+//  orderRouter
+//   .route("/processPayment")
+//   .post(
+//     protectedRoutes,
+//     allowedTo("user"),
+//     order.processPayment
+//   )
 
-  orderRouter
-  .route("/paymentCallback")
-  .get(
-    protectedRoutes,
-    allowedTo("user","admin","seller"),
-    order.paymentCallback
-  )
+//   orderRouter
+//   .route("/paymentWebhook")
+//   .post(
+//     protectedRoutes,
+//     allowedTo("user","admin","seller"),
+//     order.paymentWebhook
+//   )
+
+//   orderRouter
+//   .route("/paymentCallback")
+//   .get(
+//     protectedRoutes,
+//     allowedTo("user","admin","seller"),
+//     order.paymentCallback
+//   )
 
   orderRouter
   .route("/getAllOrders")
@@ -71,14 +72,14 @@ const orderRouter = express.Router();
     allowedTo("seller"),
     order.getOrdersForSeller
   )
-  orderRouter
-  .route("/validatePayment/:token")
-  .get(
-    protectedRoutes,
-    allowedTo("user","admin","seller"),
-    order.validatePayment
+  // orderRouter
+  // .route("/validatePayment/:token")
+  // .get(
+  //   protectedRoutes,
+  //   allowedTo("user","admin","seller"),
+  //   order.validatePayment
     
-  )
+  // )
 
   export default  orderRouter
 

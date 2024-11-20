@@ -1,35 +1,65 @@
-// import cron from 'node-cron';
-// import { orderModel } from '../../Database/models/order.model.js';
-// import { processInstallmentPayment } from '../services/paymentProcessor.js';
+import cron from 'node-cron';
+import { OrderModel } from '../../Database/models/order.model.js';
+import nodemailer from 'nodemailer';
 
-// // Run cron job daily at midnight
-// cron.schedule('0 0 * * *', async () => {
-//   console.log("Running scheduled task to process due installments...");
+// Configure nodemailer for email notifications
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // Or your email provider
+  auth: {
+    user: 'your-email@gmail.com', // Replace with your email
+    pass: 'your-email-password', // Replace with your password
+  },
+});
 
-//   const today = new Date();
-//   try {
-//     // Fetch orders with due installments for today or earlier
-//     const orders = await orderModel.find({
-//       "Installments.dueDate": { $lte: today },
-//       "Installments.status": "pending"
-//     });
+// Cron job to check overdue installments and send reminders
+cron.schedule('0 9 * * *', async () => { // Runs every day at 9:00 AM
+  try {
+    console.log('Running cron job to send installment reminders');
 
-//     for (const order of orders) {
-//       for (const installment of order.Installments) {
-//         if (installment.dueDate <= today && installment.status === 'pending') {
-//           // Process payment for the installment
-//           const paymentSuccess = await processInstallmentPayment(installment, order.userId);
+    // Fetch orders with pending installments that are overdue
+    const orders = await OrderModel.find({
+      'Installments.status': 'pending',
+      'Installments.dueDate': { $lte: new Date() },
+    }).populate('userId'); // Populate user data if necessary
 
-//           if (paymentSuccess) {
-//             installment.status = 'paid';
-//           } else {
-//             console.log(`Payment failed for installment #${installment.installmentNumber}`);
-//           }
-//         }
-//       }
-//       await order.save();
-//     }
-//   } catch (error) {
-//     console.error("Error processing due installments:", error);
-//   }
-// });
+    for (const order of orders) {
+      const userEmail = order.userId.email; // Assuming user has an `email` field
+      const overdueInstallments = order.Installments.filter(
+        (installment) => installment.status === 'pending' && installment.dueDate <= new Date()
+      );
+
+      // Send email notification to the user
+      if (userEmail && overdueInstallments.length > 0) {
+        const mailOptions = {
+          from: 'your-email@gmail.com',
+          to: userEmail,
+          subject: 'Installment Payment Reminder',
+          html: `
+            <p>Dear ${order.userId.name},</p>
+            <p>You have overdue installment payments for your order.</p>
+            <p>Details:</p>
+            <ul>
+              ${overdueInstallments
+                .map(
+                  (installment) => `
+                  <li>Installment #${installment.installmentNumber} - Amount: $${installment.amount} - Due Date: ${new Date(
+                    installment.dueDate
+                  ).toLocaleDateString()}</li>
+                `
+                )
+                .join('')}
+            </ul>
+            <p>Please make your payments as soon as possible.</p>
+          `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`Reminder sent to ${userEmail}`);
+      }
+    }
+
+    console.log('Cron job completed');
+  } catch (error) {
+    console.error('Error running cron job:', error.message);
+  }
+});
