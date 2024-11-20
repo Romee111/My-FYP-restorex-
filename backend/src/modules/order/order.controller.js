@@ -10,13 +10,14 @@ import Stripe from "stripe";
 import nodemailer from "nodemailer";
 const stripe = new Stripe(`sk_test_51QMs3Z2NEZLb2kYBwKbWNuoIsRWfNflKxVjEsWVOssJWH2qHaMmQneCcnIDXzCFqfVsb20Gm9Q4giQWFSUl5Fh1g00JRSGevUl`); // Replace with your Stripe key
 
+
 const transporter = nodemailer.createTransport({
-   host:" smtp.gmail.com " ,
+ host: "smtp.gmail.com", 
   port: 587,
   auth: {
-    user: process.env.EMAIL,
-    pass: process.env.PASSWORD
-  },
+    user:process.env.EMAIL, 
+    pass:process.env.PASSWORD
+   },
 });
 
 export const createOrder = async (req, res) => {
@@ -149,6 +150,8 @@ export const createOrder = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
 
 export const getOrdersForSeller = async (req, res) => {
   const { sellerId } = req.params;  // Extract the sellerId from request parameters
