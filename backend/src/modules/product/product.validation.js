@@ -5,7 +5,7 @@ const addProductValidation = Joi.object({
   title: Joi.string().required().trim().min(3),
   imgCover: Joi.string(),
   images: Joi.array().items(Joi.string()),
-  description: Joi.string().max(100).min(10).required().trim(),
+  description: Joi.string().max(200).min(10).required().trim(),
   color: Joi.array().required(),
   size: Joi.array().required(),
   price: Joi.number().min(0).required().default(0),
@@ -18,6 +18,7 @@ const addProductValidation = Joi.object({
   ratingAvg: Joi.number().min(1).max(5),
   ratingCount: Joi.number().min(0),
   payment_URL: Joi.string(),
+  imagesArray: Joi.array().items(Joi.string()),
 });
 
 const getSpecificProductValidation = Joi.object({

@@ -70,6 +70,12 @@ const productSchema = new Schema(
     brands: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "brand",
+    },
+    imagesArray: {
+      imageURL: [String],
+      ImageColor: [String],
+      ImageSize: [String],
+
     }
     // other fields...
   },
