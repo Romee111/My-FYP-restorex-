@@ -94,7 +94,7 @@ const getAllProducts = catchAsyncError(async (req, res, next) => {
 const getSizesWithPrices = async (productId) => {
   try {
     // Fetch the product from the database
-    const product = await product.findById(productId);
+    const product = await productModel.findById(productId);
 
     if (!product) {
       return {
