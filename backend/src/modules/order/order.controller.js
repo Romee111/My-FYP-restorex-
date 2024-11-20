@@ -7,8 +7,17 @@
 import { OrderModel } from "../../../Database/models/order.model.js";
 import { cartModel } from "../../../Database/models/cart.model.js";
 import Stripe from "stripe";
-
+import nodemailer from "nodemailer";
 const stripe = new Stripe(`sk_test_51QMs3Z2NEZLb2kYBwKbWNuoIsRWfNflKxVjEsWVOssJWH2qHaMmQneCcnIDXzCFqfVsb20Gm9Q4giQWFSUl5Fh1g00JRSGevUl`); // Replace with your Stripe key
+
+const transporter = nodemailer.createTransport({
+   host:" smtp.gmail.com " ,
+  port: 587,
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.PASSWORD
+  },
+});
 
 export const createOrder = async (req, res) => {
   try {
@@ -19,7 +28,7 @@ export const createOrder = async (req, res) => {
       paymentMethod,
       totalAmount,
       CNIC,
-      installmentMonths, // Expecting this field to specify 3 or 6 months for installment
+      installmentMonths,
     } = req.body;
 
     if (!userId || !cartId || !shippingAddress || !paymentMethod || !totalAmount) {
@@ -42,7 +51,6 @@ export const createOrder = async (req, res) => {
 
     let paymentURL = null;
 
-    // Handle installment payments
     if (paymentMethod === "installment") {
       if (!CNIC) {
         return res.status(400).json({
@@ -51,7 +59,6 @@ export const createOrder = async (req, res) => {
       }
       orderData.CNIC = CNIC;
 
-      // Validate installmentMonths
       const validInstallmentPlans = [3, 6];
       if (!validInstallmentPlans.includes(installmentMonths)) {
         return res.status(400).json({
@@ -59,77 +66,82 @@ export const createOrder = async (req, res) => {
         });
       }
 
-      // Generate installments
       const installmentAmount = totalAmount / installmentMonths;
       const installmentDueDates = Array.from(
         { length: installmentMonths },
         (_, i) => {
           const dueDate = new Date();
-          dueDate.setMonth(dueDate.getMonth() + i + 1); // Add months for due dates
+          dueDate.setMonth(dueDate.getMonth() + i + 1);
           return {
             installmentNumber: i + 1,
             amount: installmentAmount,
             dueDate,
-            paymentURL: `https://your-payment-gateway.com/pay/installment/${i + 1}`, // Example link
+            paymentURL: `https://your-payment-gateway.com/pay/installment/${i + 1}`,
           };
         }
       );
 
       orderData.Installments = installmentDueDates;
-
-      // Generate a payment URL for the first installment
       paymentURL = installmentDueDates[0].paymentURL;
     }
 
-    // Handle card payments using Stripe
     if (paymentMethod === "card") {
-      // Example line items for Stripe
       const lineItems = [
         {
           price_data: {
             currency: "usd",
             product_data: { name: "Order Payment" },
-            unit_amount: Math.round(totalAmount * 100), // Amount in cents
+            unit_amount: Math.round(totalAmount * 100),
           },
           quantity: 1,
         },
       ];
 
-      // Hardcoded success and cancel URLs
       const clientSuccessUrl = "http://localhost:3000/success";
       const clientCancelUrl = "http://localhost:3000/cancel";
 
-      // Create Stripe Checkout session
       const checkoutSession = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "payment",
         line_items: lineItems,
         success_url: `${clientSuccessUrl}?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: clientCancelUrl,
-        // shipping_address_collection: {  },
       });
 
-      // Generate payment URL and update order data
       paymentURL = checkoutSession.url;
 
       orderData.paymentIntentId = checkoutSession.payment_intent;
       orderData.paymentURL = paymentURL;
-    }
 
-    // Save the order
-    const newOrder = new OrderModel(orderData);
-    const savedOrder = await newOrder.save();
-
-    // Redirect or send payment URL for installments
-    if (paymentURL) {
       return res.status(201).json({
-        message: "Order created successfully",
-        paymentURL, // Send the payment URL for redirection
+        message: "Payment initiated, complete payment to place the order",
+        paymentURL,
       });
     }
 
+    // Payment completed, save order
+    const newOrder = new OrderModel(orderData);
+    const savedOrder = await newOrder.save();
+
+    // Send confirmation email
+    const user = await UserModel.findById(userId); // Assuming you have a UserModel
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: user.email,
+      subject: "Order Confirmation",
+      text: `Hi ${user.name},\n\nThank you for your order. Your order ID is ${savedOrder._id}.\n\nTotal Amount: $${totalAmount}\n\nRegards,\nYour Store Team`,
+    };
+
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        console.error("Error sending email:", err);
+      } else {
+        console.log("Email sent:", info.response);
+      }
+    });
+
     res.status(201).json({
-      message: "Order created successfully",
+      message: "Order created successfully and confirmation email sent",
       order: savedOrder,
     });
   } catch (error) {
