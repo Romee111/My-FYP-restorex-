@@ -76,7 +76,11 @@ const getAllProducts = catchAsyncError(async (req, res, next) => {
   const totalResults = await productModel.find().countDocuments();
 
   let apiFeature = new ApiFeatures(
-    productModel.find().populate("category").populate("subcategory"),
+    productModel
+      .find()
+      .sort({ updatedAt: -1 })
+      .populate("category")
+      .populate("subcategory"),
     req.query
   )
     .pagination()
@@ -92,14 +96,12 @@ const getAllProducts = catchAsyncError(async (req, res, next) => {
 
   const PAGE_NUMBER = apiFeature.queryString.page * 1 || 1;
 
-  res
-    .status(201)
-    .json({
-      page: PAGE_NUMBER,
-      message: "success",
-      getAllProducts,
-      totalResults,
-    });
+  res.status(201).json({
+    page: PAGE_NUMBER,
+    message: "success",
+    getAllProducts,
+    totalResults,
+  });
 });
 
 const getSizesWithPrices = async (productId) => {
@@ -153,6 +155,7 @@ const newArrivals = catchAsyncError(async (req, res, next) => {
 const getProducts = catchAsyncError(async (req, res, next) => {
   const getProducts = await productModel
     .find()
+    .sort({ updatedAt: -1 })
     .populate("category")
     .populate("subcategory");
   res.status(201).json({ message: "success", getProducts });
@@ -215,12 +218,10 @@ const updateSellerProduct = async (req, res, next) => {
           runValidators: true,
         }
       );
-      return res
-        .status(200)
-        .json({
-          message: "Product updated successfully",
-          product: updatedProduct,
-        });
+      return res.status(200).json({
+        message: "Product updated successfully",
+        product: updatedProduct,
+      });
     } else {
       return res
         .status(403)
