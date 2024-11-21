@@ -3,7 +3,7 @@ import { AppError } from "../../utils/AppError.js";
 import { cartModel } from "../../../Database/models/cart.model.js";
 import { productModel } from "../../../Database/models/product.model.js";
 import { couponModel } from "../../../Database/models/coupon.model.js";
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 // Function to calculate total price of the cart
 function calcTotalPrice(cart) {
@@ -37,15 +37,17 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
   if (!isCartExist) {
     let result = new cartModel({
       userId: req.user._id,
-      cartItem: [{  
-        productId: productId,
-        title: req.body.cartItem[0].producttitle,
-        color: req.body.cartItem[0].productColor,
-        size: req.body.cartItem[0].productSize,
-        quantity: req.body.cartItem[0].quantity,
-        price: req.body.cartItem[0].price,
-        totalProductDiscount: req.body.cartItem[0].totalProductDiscount
-      }]
+      cartItem: [
+        {
+          productId: productId,
+          title: req.body.cartItem[0].producttitle,
+          color: req.body.cartItem[0].productColor,
+          size: req.body.cartItem[0].productSize,
+          quantity: req.body.cartItem[0].quantity,
+          price: req.body.cartItem[0].price,
+          totalProductDiscount: req.body.cartItem[0].totalProductDiscount,
+        },
+      ],
     });
     calcTotalPrice(result);
     await result.save();
@@ -67,7 +69,7 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
       size: req.body.cartItem[0].productSize,
       quantity: req.body.cartItem[0].quantity,
       price: req.body.cartItem[0].price,
-      totalProductDiscount: req.body.cartItem[0].totalProductDiscount
+      totalProductDiscount: req.body.cartItem[0].totalProductDiscount,
     });
   }
 
@@ -75,13 +77,13 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
 
   if (isCartExist.discount) {
     isCartExist.totalPriceAfterDiscount =
-      isCartExist.totalPrice - (isCartExist.totalPrice * isCartExist.discount) / 100;
+      isCartExist.totalPrice -
+      (isCartExist.totalPrice * isCartExist.discount) / 100;
   }
 
   await isCartExist.save();
   res.status(201).json({ message: "success", result: isCartExist });
 });
-
 
 // Remove product from cart
 // const removeProductFromCart = catchAsyncError(async (req, res, next) => {
@@ -100,11 +102,11 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
 // });
 const removeProductFromCart = catchAsyncError(async (req, res, next) => {
   const productId = new mongoose.Types.ObjectId(req.params.id); // Convert string to ObjectId
-   
+
   let result = await cartModel.findOneAndUpdate(
     { userId: req.user._id },
-    { $pull: { cartItem: { _id: req.params.id } } },
-    // { $pull: { cartItem: { productId: productId } } }, // Use ObjectId in the query
+    // { $pull: { cartItem: { _id: req.params.id } } },
+    { $pull: { cartItem: { productId: productId } } }, // Use ObjectId in the query
     { new: true }
   );
 
@@ -123,8 +125,6 @@ const removeProductFromCart = catchAsyncError(async (req, res, next) => {
   res.status(200).json({ message: "success", cart: result });
 });
 
-
-
 // Update product quantity in the cart
 const updateProductQuantity = catchAsyncError(async (req, res, next) => {
   let product = await productModel.findById(req.params.id);
@@ -140,7 +140,8 @@ const updateProductQuantity = catchAsyncError(async (req, res, next) => {
 
   if (isCartExist.discount) {
     isCartExist.totalPriceAfterDiscount =
-      isCartExist.totalPrice - (isCartExist.totalPrice * isCartExist.discount) / 100;
+      isCartExist.totalPrice -
+      (isCartExist.totalPrice * isCartExist.discount) / 100;
   }
   await isCartExist.markModified("cartItem");
   await isCartExist.save();
@@ -153,7 +154,6 @@ const getCartById = catchAsyncError(async (req, res, next) => {
   const getCartById = await cartModel.findById(id);
   res.status(201).json({ message: "success", getCartById });
 });
-
 
 // Apply coupon to cart
 const applyCoupon = catchAsyncError(async (req, res, next) => {
@@ -176,7 +176,9 @@ const applyCoupon = catchAsyncError(async (req, res, next) => {
 
 // Get logged user's cart
 const getLoggedUserCart = catchAsyncError(async (req, res, next) => {
-  let cartItems = await cartModel.findOne({ userId: req.user._id }).populate('cartItem.productId');
+  let cartItems = await cartModel
+    .findOne({ userId: req.user._id })
+    .populate("cartItem.productId");
   res.status(200).json({ message: "success", cart: cartItems });
 });
 
@@ -186,5 +188,5 @@ export {
   updateProductQuantity,
   applyCoupon,
   getLoggedUserCart,
-  getCartById
+  getCartById,
 };
