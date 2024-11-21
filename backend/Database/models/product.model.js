@@ -72,24 +72,12 @@ const productSchema = new Schema(
     },
 
     imagesArray: [
-      {
-        images: { type: String },
-        sizes: { type: String },
-        colors: { type: String },
-      },
-      {
-        images: { type: String },
-        sizes: { type: String },
-        colors: { type: String },
-      },
-      {
-        images: { type: String },
-        sizes: { type: String },
-        colors: { type: String },
-      },
-    ],
+      { images: { type: String },sizes: { type: String },colors: { type: String }, price: { type: Number }, quantity: { type: Number }, },
+       { images: { type: String },sizes: { type: String },colors: { type: String }, price: { type: Number }, quantity: { type: Number }, },
+       { images: { type: String },sizes: { type: String },colors: { type: String } ,price: { type: Number }, quantity: { type: Number }, }, 
+    ]
 
-    // other fields...
+
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
