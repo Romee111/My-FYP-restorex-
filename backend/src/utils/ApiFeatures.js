@@ -21,23 +21,42 @@ export class ApiFeatures {
     this.mongooseQuery.limit(LIMIT);
     return this;
   }
-
-  // Filteration
   filteration() {
     let filterObj = { ...this.queryString };
     let excludedQuery = ["page", "sort", "fields", "keyword", "limit"];
-    
+
     excludedQuery.forEach((ele) => {
       delete filterObj[ele];
     });
-    filterObj = JSON.stringify(filterObj);
 
+    // Check for price range filter (price[lte] and price[gte])
+    if (this.queryString["price[gte]"] || this.queryString["price[lte]"]) {
+      filterObj.price = {}; // Initialize price filter object
+
+      // Assign the appropriate price filters if values exist
+      if (this.queryString["price[gte]"]) {
+        const minPrice = Number(this.queryString["price[gte]"]);
+        if (!isNaN(minPrice)) {
+          filterObj.price["$gte"] = minPrice;
+        }
+      }
+      if (this.queryString["price[lte]"]) {
+        const maxPrice = Number(this.queryString["price[lte]"]);
+        if (!isNaN(maxPrice)) {
+          filterObj.price["$lte"] = maxPrice;
+        }
+      }
+    }
+
+    // Handle query operators (like gt, gte, lt, lte)
+    filterObj = JSON.stringify(filterObj);
     filterObj = filterObj.replace(
       /\b(gt|gte|lt|lte)\b/g,
       (match) => `$${match}`
     );
     filterObj = JSON.parse(filterObj);
 
+    // Pass the constructed filter to the Mongoose query
     this.mongooseQuery.find(filterObj);
     return this;
   }
@@ -72,6 +91,5 @@ export class ApiFeatures {
     }
     return this;
   }
-priceBasedSize
-  
+  priceBasedSize;
 }

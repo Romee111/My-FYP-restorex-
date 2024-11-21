@@ -50,8 +50,8 @@ const productSchema = new Schema(
     size: {
       type: [String],
     },
- 
-     description: {
+
+    description: {
       type: String,
       maxlength: [400, "Description should be less than or equal to 400"],
       minlength: [10, "Description should be more than or equal to 10"],
@@ -77,11 +77,10 @@ const productSchema = new Schema(
        { images: { type: String },sizes: { type: String },colors: { type: String } ,price: { type: Number }, quantity: { type: Number }, }, 
     ]
 
-    // other fields...
+
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
-
 
 // Virtual for reviews
 productSchema.virtual("reviews", {
