@@ -50,7 +50,6 @@ const productSchema = new Schema(
     size: {
       type: [String],
     },
-
     description: {
       type: String,
       maxlength: [400, "Description should be less than or equal to 400"],
@@ -71,13 +70,16 @@ const productSchema = new Schema(
       ref: "brand",
     },
 
+    // New imagesArray to associate each image with color, size, price, and quantity
     imagesArray: [
-      { images: { type: String },sizes: { type: String },colors: { type: String }, price: { type: Number }, quantity: { type: Number }, },
-       { images: { type: String },sizes: { type: String },colors: { type: String }, price: { type: Number }, quantity: { type: Number }, },
-       { images: { type: String },sizes: { type: String },colors: { type: String } ,price: { type: Number }, quantity: { type: Number }, }, 
-    ]
-
-
+      {
+        images: { type: String },
+        sizes: { type: String },
+        colors: { type: String },
+        price: { type: Number },
+        quantity: { type: Number },
+      },
+    ],
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

@@ -1,23 +1,19 @@
-  
-
-
-
-
 //import axios from "axios";
 import { OrderModel } from "../../../Database/models/order.model.js";
 import { cartModel } from "../../../Database/models/cart.model.js";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
-const stripe = new Stripe(`sk_test_51QMs3Z2NEZLb2kYBwKbWNuoIsRWfNflKxVjEsWVOssJWH2qHaMmQneCcnIDXzCFqfVsb20Gm9Q4giQWFSUl5Fh1g00JRSGevUl`); // Replace with your Stripe key
-
+const stripe = new Stripe(
+  `sk_test_51QMs3Z2NEZLb2kYBwKbWNuoIsRWfNflKxVjEsWVOssJWH2qHaMmQneCcnIDXzCFqfVsb20Gm9Q4giQWFSUl5Fh1g00JRSGevUl`
+);
 
 const transporter = nodemailer.createTransport({
- host: "smtp.gmail.com", 
+  host: "smtp.gmail.com",
   port: 587,
   auth: {
-    user:process.env.EMAIL, 
-    pass:process.env.PASSWORD
-   },
+    user: process.env.EMAIL,
+    pass: process.env.PASSWORD,
+  },
 });
 
 export const createOrder = async (req, res) => {
@@ -32,13 +28,20 @@ export const createOrder = async (req, res) => {
       installmentMonths,
     } = req.body;
 
-    if (!userId || !cartId || !shippingAddress || !paymentMethod || !totalAmount) {
+    if (
+      !userId ||
+      !cartId ||
+      !shippingAddress ||
+      !paymentMethod ||
+      !totalAmount
+    ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
     if (paymentMethod === "installment" && totalAmount < 30000) {
       return res.status(400).json({
-        message: "Installment payment is only available for orders above 30,000.",
+        message:
+          "Installment payment is only available for orders above 30,000.",
       });
     }
 
@@ -77,7 +80,9 @@ export const createOrder = async (req, res) => {
             installmentNumber: i + 1,
             amount: installmentAmount,
             dueDate,
-            paymentURL: `https://your-payment-gateway.com/pay/installment/${i + 1}`,
+            paymentURL: `https://my-fyp-restorex.vercel.app/pay/installment/${
+              i + 1
+            }`,
           };
         }
       );
@@ -98,14 +103,16 @@ export const createOrder = async (req, res) => {
         },
       ];
 
-      const clientSuccessUrl = "http://localhost:3000/success";
-      const clientCancelUrl = "http://localhost:3000/cancel";
+      const clientSuccessUrl =
+        "https://ecommerce-react-ten-pi.vercel.app/user/payment-success";
+      const clientCancelUrl =
+        "https://ecommerce-react-ten-pi.vercel.app/user/payment-cancel";
 
       const checkoutSession = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "payment",
         line_items: lineItems,
-        success_url: `${clientSuccessUrl}?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${clientSuccessUrl}?session_id=${CHECKOUT_SESSION_ID}`,
         cancel_url: clientCancelUrl,
       });
 
@@ -151,19 +158,19 @@ export const createOrder = async (req, res) => {
   }
 };
 
-
-
 export const getOrdersForSeller = async (req, res) => {
-  const { sellerId } = req.params;  // Extract the sellerId from request parameters
+  const { sellerId } = req.params; // Extract the sellerId from request parameters
 
   try {
     // Find orders where the products in the cart have a createdBy field matching the sellerId
     const orders = await OrderModel.find({
-      'cartId.products.createdBy': sellerId,  // Ensure 'products.createdBy' matches the sellerId
-    }).populate('cartId');  // Optional: populate cartId if you want to retrieve cart details along with the order
+      "cartId.products.createdBy": sellerId, // Ensure 'products.createdBy' matches the sellerId
+    }).populate("cartId"); // Optional: populate cartId if you want to retrieve cart details along with the order
 
     if (orders.length === 0) {
-      return res.status(404).json({ message: "No orders found for this seller" });
+      return res
+        .status(404)
+        .json({ message: "No orders found for this seller" });
     }
 
     res.status(200).json({
@@ -172,10 +179,14 @@ export const getOrdersForSeller = async (req, res) => {
     });
   } catch (error) {
     console.error("Error retrieving seller orders:", error.message);
-    res.status(500).json({ message: "Error retrieving seller orders", error: error.message });
+    res
+      .status(500)
+      .json({
+        message: "Error retrieving seller orders",
+        error: error.message,
+      });
   }
 };
-
 
 export const cancelOrder = async (req, res) => {
   const { orderId } = req.params;
@@ -197,14 +208,18 @@ export const cancelOrder = async (req, res) => {
     res.status(200).json({ message: "Order cancelled successfully", order });
   } catch (error) {
     console.error("Error cancelling order:", error.message);
-    res.status(500).json({ message: "Error cancelling order", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error cancelling order", error: error.message });
   }
 };
 
 // Get All Orders
 export const getAllOrders = async (req, res) => {
   try {
-    const orders = await OrderModel.find().populate("userId").populate("cartId");
+    const orders = await OrderModel.find()
+      .populate("userId")
+      .populate("cartId");
 
     res.status(200).json({
       message: "Orders retrieved successfully",
@@ -212,7 +227,9 @@ export const getAllOrders = async (req, res) => {
     });
   } catch (error) {
     console.error("Error retrieving orders:", error.message);
-    res.status(500).json({ message: "Error retrieving orders", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving orders", error: error.message });
   }
 };
 
@@ -232,6 +249,8 @@ export const getOrderById = async (req, res) => {
     res.status(200).json({ message: "Order retrieved successfully", order });
   } catch (error) {
     console.error("Error retrieving order:", error.message);
-    res.status(500).json({ message: "Error retrieving order", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error retrieving order", error: error.message });
   }
 };
