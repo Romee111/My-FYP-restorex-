@@ -12,12 +12,25 @@ const addSubCategory = catchAsyncError(async (req, res, next) => {
 
   res.status(201).json({ message: "success", addSubcategory });
 });
+const getSubCategoryById = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+
+  // Find the subcategory by its ID
+  const subCategory = await subCategoryModel.findById(id);
+
+  // If not found, throw an error
+  if (!subCategory) {
+    return next(new AppError("Subcategory not found", 404));
+  }
+
+  // Respond with the subcategory data
+  res.status(200).json({ message: "success", subCategory });
+});
 
 // const getAllSubCategories = catchAsyncError(async (req, res, next) => {
 //   console.log(req.params);
 //   let filterObj = {};
 
-  
 //   if (req.params.category) {
 //     filterObj = { category: req.params.category };
 //   }
@@ -43,7 +56,7 @@ const getAllSubCategories = catchAsyncError(async (req, res, next) => {
   }
 
   const apiFeature = new ApiFeatures(
-    subCategoryModel.find(filterObj),
+    subCategoryModel.find(filterObj).sort({ updatedAt: -1 }),
     req.query
   ).filteration();
 
@@ -52,7 +65,6 @@ const getAllSubCategories = catchAsyncError(async (req, res, next) => {
 
   res.status(201).json({ message: "success", getAllSubCategories });
 });
-
 
 const updateSubCategory = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
@@ -79,4 +91,5 @@ export {
   getAllSubCategories,
   updateSubCategory,
   deleteSubCategory,
+  getSubCategoryById,
 };

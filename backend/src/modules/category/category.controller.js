@@ -28,7 +28,10 @@ const getCategoryWithId = catchAsyncError(async (req, res, next) => {
 });
 
 const getAllCategories = catchAsyncError(async (req, res, next) => {
-  let apiFeature = new ApiFeatures(categoryModel.find(), req.query)
+  let apiFeature = new ApiFeatures(
+    categoryModel.find().sort({ updatedAt: -1 }),
+    req.query
+  )
     .pagination()
     .fields()
     .filteration()

@@ -1,4 +1,5 @@
 import mongoose, { Schema, model } from "mongoose";
+import { NotificationModel } from "./notification.model.js";
 
 const productSchema = new Schema(
   {
@@ -69,13 +70,11 @@ const productSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "brand",
     },
-
-    // New imagesArray to associate each image with color, size, price, and quantity
     imagesArray: [
       {
         images: { type: String },
-        sizes: { type: String },
-        colors: { type: String },
+        sizes: { type: [String] },
+        colors: { type: [String]},
         price: { type: Number },
         quantity: { type: Number },
       },
@@ -84,16 +83,28 @@ const productSchema = new Schema(
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
-// Virtual for reviews
 productSchema.virtual("reviews", {
   ref: "review",
   localField: "_id",
   foreignField: "productId",
 });
 
-// Pre-hook for populating reviews on find operations
 productSchema.pre(["find", "findOne"], function () {
   this.populate("reviews");
+});
+
+// Post-hook to create notification
+productSchema.post("save", async function (doc) {
+  try {
+    await NotificationModel.create({
+      recipient: doc.createdBy,
+      message: `A new product "${doc.title}" has been created.`,
+      type: "created",
+    });
+    console.log("Notification created for new product.");
+  } catch (error) {
+    console.error("Error creating notification:", error);
+  }
 });
 
 export const productModel = model("product", productSchema);

@@ -83,12 +83,12 @@ const getAllProducts = catchAsyncError(async (req, res, next) => {
       .populate("subcategory"),
     req.query
   )
-    .pagination()
-    .limit()
-    .fields()
-    .filteration()
-    .search()
-    .sort();
+    // .pagination()
+    // .limit()
+    // .fields()
+    // .filteration()
+    // .search()
+    // .sort();
 
   // Await the final mongoose query with all features applied
   const getAllProducts = await apiFeature.mongooseQuery;

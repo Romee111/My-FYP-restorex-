@@ -17,24 +17,28 @@ subCategoryRouter
     allowedTo("admin"),
     validate(addSubCategoryValidation),
     subCategory.addSubCategory
-  )
-  subCategoryRouter
+  );
+subCategoryRouter
   .route("/getAllSubCategories")
   .get(subCategory.getAllSubCategories);
+
+subCategoryRouter
+  .route("/getSubCategory/:id")
+  .get(protectedRoutes, subCategory.getSubCategoryById);
 
 subCategoryRouter
   .route("/updateSubCategory/:id")
   .put(
     protectedRoutes,
-    allowedTo("admin",),
+    allowedTo("admin"),
     validate(updateSubCategoryValidation),
     subCategory.updateSubCategory
-  )
-  subCategoryRouter
+  );
+subCategoryRouter
   .route("/deleteSubCategory/:id")
   .delete(
     protectedRoutes,
-    allowedTo("admin",),
+    allowedTo("admin"),
     validate(deleteSubCategoryValidation),
     subCategory.deleteSubCategory
   );

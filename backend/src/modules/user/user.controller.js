@@ -58,7 +58,10 @@ const addUser = catchAsyncError(async (req, res, next) => {
 // });
 
 const getAllUsers = catchAsyncError(async (req, res, next) => {
-  let apiFeature = new ApiFeatures(userModel.find(), req.query)
+  let apiFeature = new ApiFeatures(
+    userModel.find().sort({ updatedAt: -1 }),
+    req.query
+  )
     .pagination()
     .fields()
     .filteration()
@@ -69,7 +72,7 @@ const getAllUsers = catchAsyncError(async (req, res, next) => {
   const getAllUsers = await apiFeature.mongooseQuery;
 
   // Log the result to check if data is being fetched
-  console.log(getAllUsers); // Check if data is returned
+  // console.log(getAllUsers); // Check if data is returned
 
   // If no users are found, return a 404 or empty result
   if (getAllUsers.length === 0) {
@@ -84,6 +87,20 @@ const getAllUsers = catchAsyncError(async (req, res, next) => {
     page: PAGE_NUMBER,
     message: "success",
     data: getAllUsers, // Pass the result data in the 'data' field
+  });
+});
+
+const fetchUserById = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+
+  const user = await userModel.findById(id);
+  if (!user) {
+    return next(new AppError("User not found", 404));
+  }
+
+  res.status(200).json({
+    message: "success",
+    data: user,
   });
 });
 
@@ -122,7 +139,7 @@ const updateUser = catchAsyncError(async (req, res, next) => {
       }
     }
   }
-  
+
   console.log(req.body);
 
   // Update the user information
@@ -152,4 +169,11 @@ const changeUserPassword = catchAsyncError(async (req, res, next) => {
 });
 const deleteUser = deleteOne(userModel, "user");
 
-export { addUser, getAllUsers, updateUser, deleteUser, changeUserPassword };
+export {
+  addUser,
+  getAllUsers,
+  fetchUserById,
+  updateUser,
+  deleteUser,
+  changeUserPassword,
+};

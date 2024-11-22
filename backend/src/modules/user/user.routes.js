@@ -11,29 +11,24 @@ import {
 
 const userRouter = express.Router();
 
-userRouter
-  .route("/addUser")
-  .post(
-    // protectedRoutes,
-    // allowedTo("admin", "seller", "user"),
-     User.addUser)
+userRouter.route("/addUser").post(
+  // protectedRoutes,
+  // allowedTo("admin", "seller", "user"),
+  User.addUser
+);
 
-userRouter
-  .route("/getAllUsers")
-  .get(User.getAllUsers);
-userRouter
-  .route("/deleteUser/:id")
-  .delete(
-    // protectedRoutes,
-    // allowedTo("admin", "user",),
-    validate(deleteUserValidation), User.deleteUser);
+userRouter.route("/getUserById/:id").get(User.fetchUserById);
+userRouter.route("/getAllUsers").get(User.getAllUsers);
+userRouter.route("/deleteUser/:id").delete(
+  // protectedRoutes,
+  // allowedTo("admin", "user",),
+  validate(deleteUserValidation),
+  User.deleteUser
+);
 
 userRouter
   .route("/updateUser/:id")
-  .put(
-    protectedRoutes,
-    allowedTo("admin", "user"),
-    User.updateUser)
+  .put(protectedRoutes, allowedTo("admin", "user"), User.updateUser);
 userRouter
   .route("/changeUserPassword/:id")
   .patch(validate(changeUserPasswordValidation), User.changeUserPassword);
