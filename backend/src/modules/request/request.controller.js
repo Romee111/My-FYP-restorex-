@@ -99,7 +99,7 @@ export const respondToRequest = async (req, res, next) => {
     
 
     // Optionally send an email to notify the seller of the request status
-    // await notifySellerStatus(updatedRequest.sellerId.email, status);
+    await notifySellerStatus(updatedRequest.sellerId.email, status);
 
     // Return success response
     res.status(200).json({
