@@ -98,7 +98,7 @@ app.post(
       });
     } catch (error) {
       console.error("Error uploading file:", error);
-      res.status(500).json({ error: "Failed to upload file to Pinata" });
+      res.status(500).json({ error: `Failed to upload file to Pinata ${JSON.stringify(error)}` });
     }
   }
 );
