@@ -1,5 +1,6 @@
 // controllers/request.controller.js
 import Request from "../../../Database/models/request.model.js";
+import userModel from "../../../Database/models/user.model.js";
 import { notifySellerStatus } from "../../utils/emailsender.js"; // Import the notify function
 
 export const getAllRequests = async (req, res, next) => {
@@ -18,7 +19,6 @@ export const createRequest = async (req, res, next) => {
   try {
     const { requestType, requestDetails } = req.body;
     const sellerId = req.user._id; // Assuming the seller is authenticated and their ID is stored in the session or JWT
-    console.log({sellerId});
     // Validate required fields
     if (!requestType || !requestDetails) {
       return res.status(400).json({
@@ -48,6 +48,7 @@ export const createRequest = async (req, res, next) => {
     next(error);
   }
 };
+
 export const respondToRequest = async (req, res, next) => {
   try {
     const { id } = req.params; // Request ID from the URL
@@ -59,23 +60,43 @@ export const respondToRequest = async (req, res, next) => {
       { status, response },
       { new: true }
     ).populate("sellerId");
-    
+
     if (!updatedRequest) {
       return res.status(404).json({ message: "Request not found" });
     }
 
     // If the request type is "signup" and the status is "approved", update the seller_approved field
-    if (updatedRequest.requestType === "signup" && status === "approved") {
-      const seller = await userModel.findById(updatedRequest.sellerId._id);
+    console.log({
+      type: updatedRequest.requestType,
+      status: updatedRequest.status,
+    });
 
-      if (seller && seller.role === "seller") {
-        seller.seller_approved = true;
-        await seller.save();
-      } else {
-        console.log(`Seller "${seller.name}" approved successfully.`);
-        return res.status(404).json({ message: "Seller not found or invalid role" });
-      }
+    if (
+      updatedRequest.requestType === "signup" &&
+      updatedRequest.status === "approved"
+    ) {
+      await userModel.updateOne(
+        { _id: updatedRequest.sellerId._id, role: "seller" },
+        {
+          seller_approved: true,
+          seller_status: "approved",
+        }
+      );
+      console.log(`Seller "${updatedRequest.sellerId._id}" approved successfully.`);
+    } else if (
+      updatedRequest.requestType === "signup" &&
+      updatedRequest.status === "rejected"
+    ) {
+      await userModel.updateOne(
+        { _id: updatedRequest.sellerId._id, role: "seller" },
+        {
+          seller_approved: false,
+          seller_status: "rejected",
+        }
+      );
+      console.log(`Seller "${updatedRequest.sellerId._id}" rejected successfully.`);
     }
+    
 
     // Optionally send an email to notify the seller of the request status
     // await notifySellerStatus(updatedRequest.sellerId.email, status);
@@ -89,7 +110,6 @@ export const respondToRequest = async (req, res, next) => {
     next(error);
   }
 };
-
 
 export const pendingRequests = async (req, res, next) => {
   try {
