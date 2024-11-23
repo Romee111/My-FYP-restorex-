@@ -61,7 +61,10 @@ const addProduct = async (req, res, next) => {
 const getSellerProducts = async (req, res, next) => {
   try {
     const sellerId = req.user._id; // The logged-in seller's ID
-    const products = await productModel.find({ createdBy: sellerId });
+    const products = await productModel
+      .find({ createdBy: sellerId })
+      .populate("category")
+      .populate("subcategory");
 
     res
       .status(200)
@@ -294,7 +297,7 @@ const addReview = async (req, res) => {
 
     // Update the total rating and average rating
     product.totalRating += rating;
-    product.rating = product.totalRating / product.reviews.length;
+    product.rating = product.totalRating / product.reviews?.length;
 
     await product.save();
 

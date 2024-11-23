@@ -29,6 +29,11 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    seller_status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
     isActive: {
       type: Boolean,
       default: true,

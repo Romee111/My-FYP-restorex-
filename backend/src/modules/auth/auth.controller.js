@@ -21,7 +21,8 @@ const signUp = catchAsyncError(async (req, res, next) => {
   // Generate JWT token
   const token = jwt.sign(
     { email: user.email, name: user.name, id: user._id, role: user.role },
-    "JR"
+    "JR",
+    { expiresIn: "1h" }
   );
 
   // Send signup email to the user
@@ -45,53 +46,65 @@ const signUp = catchAsyncError(async (req, res, next) => {
   res.status(201).json({ message: "success", user, token });
 });
 
-
 const signIn = catchAsyncError(async (req, res, next) => {
   const { email, password } = req.body;
   console.log("================");
   let user = await userModel.findOne({ email });
+
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return next(new AppError("Invalid email or password", 401));
   }
   console.log("================");
 
   let token = jwt.sign(
-    { email: user.email, name: user.name, id: user._id, role: user.role },
-    "JR"
+    { email: user.email, name: user.name, id: user._id, role: user?.role },
+    "JR",
+    { expiresIn: "1h" }
   );
   res.status(201).json({ message: "success", token, user });
 });
-
 const protectedRoutes = catchAsyncError(async (req, res, next) => {
   const authHeader = req.headers.authorization; // Typically 'Authorization' header is used
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return next(new AppError("Token was not provided!", 401));
   }
 
-  const token = authHeader.split(" ")[1]; // Extract the token after 'Bearer'
+  const token = authHeader.split(" ")[1];
   let decoded;
+
   try {
     decoded = jwt.verify(token, "JR"); // Verify the token
   } catch (error) {
-    return next(new AppError("Invalid token", 401));
+    if (error.name === "TokenExpiredError") {
+      return next(new AppError("Token has expired", 401)); // Handle token expiration
+    }
+    return next(new AppError("Invalid token", 401)); // Handle other token errors
   }
 
   let user = await userModel.findById(decoded.id);
-  if (!user) return next(new AppError("Invalid user", 404));
-
-  if (user.passwordChangedAt) {
-    let passwordChangedAt = parseInt(user.passwordChangedAt.getTime() / 1000);
-    if (passwordChangedAt > decoded.iat)
-      return next(new AppError("Invalid token", 401));
+  if (!user) {
+    return next(new AppError("Invalid user", 404));
   }
 
-  req.user = user;
+  if (user.passwordChangedAt) {
+    const passwordChangedAt = parseInt(
+      user.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    if (passwordChangedAt > decoded.iat) {
+      return next(
+        new AppError("Invalid token - Password changed after token issued", 401)
+      );
+    }
+  }
+
+  req.user = user; // Attach user to the request object for further use
   next();
 });
 
 const allowedTo = (...roles) => {
   return catchAsyncError(async (req, res, next) => {
-    if (!roles.some((role) => role?.toLowerCase().includes(req.user.role)))
+    if (!roles.some((role) => role?.toLowerCase().includes(req?.user?.role)))
       return next(
         new AppError(
           "You are not authorized to access this route. Your are ${req.user.role}",

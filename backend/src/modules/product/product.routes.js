@@ -35,7 +35,7 @@ productRouter.route("/getSizesWithPrices").get(product.getSizesWithPrices);
 
 productRouter
   .route("/getSellerProducts")
-  .get(allowedTo("seller"), product.getSellerProducts);
+  .get(protectedRoutes, allowedTo("seller"), product.getSellerProducts);
 
 // Route to get all products
 productRouter.route("/getAllProducts").get(product.getAllProducts);
