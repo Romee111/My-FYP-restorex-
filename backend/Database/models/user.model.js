@@ -22,8 +22,12 @@ const userSchema = new Schema(
     passwordChangedAt: Date,
     role: {
       type: String,
-      enum: ["admin", "user", "seller"], // Add "seller" as a role
+      enum: ["admin", "user", "seller"],
       default: "user",
+    },
+    seller_approved: {
+      type: Boolean,
+      default: false,
     },
     isActive: {
       type: Boolean,
@@ -77,6 +81,21 @@ userSchema.pre("findOneAndUpdate", function () {
   }
 });
 
+// Post-hook to create a notification when seller role is assigned
+userSchema.post("save", async function (doc) {
+  try {
+    if (doc.role === "seller" && !doc.seller_approved) {
+      await NotificationModel.create({
+        recipient: "admin", // Notify admin for approval
+        message: `A new seller registration request has been received: ${doc.name}.`,
+        type: "seller_request",
+      });
+      console.log("Notification created for seller approval request.");
+    }
+  } catch (error) {
+    console.error("Error creating notification:", error);
+  }
+});
+
 const userModel = model("user", userSchema);
 export default userModel;
-

@@ -6,25 +6,45 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
-
+import Request from "../../../Database/models/request.model.js";
 const signUp = catchAsyncError(async (req, res, next) => {
-  // console.log(req.body.email);
+  // Check if the email already exists
   let isUserExist = await userModel.findOne({ email: req.body.email });
   if (isUserExist) {
-    return next(new AppError("Account is already exist!", 409));
+    return next(new AppError("Account already exists!", 409));
   }
-  console.log(req.body);
 
+  // Create a new user
   const user = new userModel(req.body);
   await user.save();
 
-  let token = jwt.sign(
+  // Generate JWT token
+  const token = jwt.sign(
     { email: user.email, name: user.name, id: user._id, role: user.role },
     "JR"
   );
+
+  // Send signup email to the user
   await sendSignupEmail(req.body.email, user._id);
+
+  // If the user is a seller, create an unapproved request
+  if (user.role === "seller") {
+    const newRequest = new Request({
+      sellerId: user._id,
+      requestType: "signup",
+      requestDetails: `New seller "${user.name}" has registered with email "${user.email}".`,
+      status: "pending",
+    });
+
+    // Save the request to the database
+    await newRequest.save();
+    console.log("New seller signup request created.");
+  }
+
+  // Respond to the client
   res.status(201).json({ message: "success", user, token });
 });
+
 
 const signIn = catchAsyncError(async (req, res, next) => {
   const { email, password } = req.body;

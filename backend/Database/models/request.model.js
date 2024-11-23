@@ -12,7 +12,7 @@ const requestSchema = new mongoose.Schema(
     requestType: {
       type: String,
       required: true,
-      enum: ["update", "delete", "other"],
+      enum: ["signup","update", "delete", "other"],
     },
     requestDetails: {
       type: String,

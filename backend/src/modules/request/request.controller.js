@@ -48,35 +48,48 @@ export const createRequest = async (req, res, next) => {
     next(error);
   }
 };
-
 export const respondToRequest = async (req, res, next) => {
   try {
     const { id } = req.params; // Request ID from the URL
     const { status, response } = req.body; // Status and response message from the admin
 
-    // Update the request status and response message
+    // Find and update the request
     const updatedRequest = await Request.findByIdAndUpdate(
       id,
       { status, response },
       { new: true }
-    ).populate("sellerId"); // Populate seller details to get their email
-
+    ).populate("sellerId");
+    
     if (!updatedRequest) {
       return res.status(404).json({ message: "Request not found" });
     }
 
-    // Send email notification to the seller based on the status
+    // If the request type is "signup" and the status is "approved", update the seller_approved field
+    if (updatedRequest.requestType === "signup" && status === "approved") {
+      const seller = await userModel.findById(updatedRequest.sellerId._id);
+
+      if (seller && seller.role === "seller") {
+        seller.seller_approved = true;
+        await seller.save();
+      } else {
+        console.log(`Seller "${seller.name}" approved successfully.`);
+        return res.status(404).json({ message: "Seller not found or invalid role" });
+      }
+    }
+
+    // Optionally send an email to notify the seller of the request status
     // await notifySellerStatus(updatedRequest.sellerId.email, status);
 
     // Return success response
     res.status(200).json({
-      message: "Request status updated and notification sent",
+      message: "Request status updated, and seller approved if applicable",
       request: updatedRequest,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 export const pendingRequests = async (req, res, next) => {
   try {
