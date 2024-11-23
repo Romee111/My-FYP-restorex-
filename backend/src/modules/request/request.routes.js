@@ -7,29 +7,22 @@ import { allowedTo, protectedRoutes } from "../auth/auth.controller.js";
 const requestRouter = express.Router();
 
 requestRouter
-    .route("/createRequest")
-    .post(
-        protectedRoutes,
-        allowedTo("seller"),
-        request.createRequest
-
-    )
-
-    requestRouter
-    .route("/pendingRequests")
-    .get(
-        protectedRoutes,
-        allowedTo("admin"),
-        request.pendingRequests
-    )
+  .route("/getAllRequests")
+  .get(protectedRoutes, allowedTo("admin"), request.getAllRequests);
 
 requestRouter
-    .route("/respondToRequest/:id")
-    .put(
-        protectedRoutes,
-        allowedTo("admin"),
-        // validate(request.respondToRequestValidation),
-        request.respondToRequest
-    );
+  .route("/createRequest")
+  .post(protectedRoutes, allowedTo("seller"), request.createRequest);
 
-export default requestRouter
+requestRouter
+  .route("/pendingRequests")
+  .get(protectedRoutes, allowedTo("admin"), request.pendingRequests);
+
+requestRouter.route("/respondToRequest/:id").put(
+  protectedRoutes,
+  allowedTo("admin"),
+  // validate(request.respondToRequestValidation),
+  request.respondToRequest
+);
+
+export default requestRouter;

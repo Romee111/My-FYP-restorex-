@@ -74,20 +74,23 @@ const productSchema = new Schema(
       {
         images: { type: String },
         sizes: { type: [String] },
-        colors: { type: [String]},
+        colors: { type: [String] },
         price: { type: Number },
         quantity: { type: Number },
+      },
+    ],
+    reviews: [
+      {
+        user: { type: Schema.Types.ObjectId, ref: "user" },
+        username: { type: String },
+        rating: { type: Number, required: true },
+        reviewText: { type: String, required: true },
+        createdAt: { type: Date, default: Date.now },
       },
     ],
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
-
-productSchema.virtual("reviews", {
-  ref: "review",
-  localField: "_id",
-  foreignField: "productId",
-});
 
 productSchema.pre(["find", "findOne"], function () {
   this.populate("reviews");

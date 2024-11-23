@@ -1,41 +1,54 @@
 // controllers/request.controller.js
-import Request  from '../../../Database/models/request.model.js';
-import { notifySellerStatus } from '../../utils/emailsender.js';  // Import the notify function
+import Request from "../../../Database/models/request.model.js";
+import { notifySellerStatus } from "../../utils/emailsender.js"; // Import the notify function
+
+export const getAllRequests = async (req, res, next) => {
+  try {
+    const getAllRequests = await Request.find().populate(
+      "sellerId",
+      "name email"
+    ); // Populates seller's name and email
+    res.status(200).json({ message: "success", getAllRequests });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const createRequest = async (req, res, next) => {
-    try {
-      const { requestType, requestDetails } = req.body;
-      const sellerId = req.user.id; // Assuming the seller is authenticated and their ID is stored in the session or JWT
-  
-      // Validate required fields
-      if (!requestType || !requestDetails) {
-        return res.status(400).json({
-          status: 'fail',
-          message: 'Request type and details are required.',
-        });
-      }
-  
-      // Create a new request document
-      const newRequest = new Request({
-        sellerId,
-        requestType,
-        requestDetails,
-        status: 'pending', // Default status when the request is created
+  try {
+    const { requestType, requestDetails } = req.body;
+    const sellerId = req.user._id; // Assuming the seller is authenticated and their ID is stored in the session or JWT
+    console.log({sellerId});
+    // Validate required fields
+    if (!requestType || !requestDetails) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Request type and details are required.",
       });
-  
-      // Save the request to the database
-      await newRequest.save();
-  
-      // Send success response
-      res.status(201).json({
-        status: 'success',
-        message: 'Request submitted successfully.',
-        request: newRequest,
-      });
-    } catch (error) {
-      next(error);
     }
-  };
+
+    // Create a new request document
+    const newRequest = new Request({
+      sellerId,
+      requestType,
+      requestDetails,
+      status: "pending", // Default status when the request is created
+    });
+
+    // Save the request to the database
+    await newRequest.save();
+
+    // Send success response
+    res.status(201).json({
+      status: "success",
+      message: "Request submitted successfully.",
+      request: newRequest,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const respondToRequest = async (req, res, next) => {
   try {
     const { id } = req.params; // Request ID from the URL
@@ -46,19 +59,19 @@ export const respondToRequest = async (req, res, next) => {
       id,
       { status, response },
       { new: true }
-    ).populate('sellerId'); // Populate seller details to get their email
+    ).populate("sellerId"); // Populate seller details to get their email
 
     if (!updatedRequest) {
       return res.status(404).json({ message: "Request not found" });
     }
 
     // Send email notification to the seller based on the status
-    await notifySellerStatus(updatedRequest.sellerId.email, status);
+    // await notifySellerStatus(updatedRequest.sellerId.email, status);
 
     // Return success response
     res.status(200).json({
       message: "Request status updated and notification sent",
-      request: updatedRequest
+      request: updatedRequest,
     });
   } catch (error) {
     next(error);
@@ -67,10 +80,11 @@ export const respondToRequest = async (req, res, next) => {
 
 export const pendingRequests = async (req, res, next) => {
   try {
-    const requests = await Request.find({ status: 'pending' }).populate('sellerId');
+    const requests = await Request.find({ status: "pending" }).populate(
+      "sellerId"
+    );
     res.status(200).json({ message: "Success", requests });
   } catch (error) {
     next(error);
   }
 };
-

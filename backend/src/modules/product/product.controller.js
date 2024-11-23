@@ -82,13 +82,13 @@ const getAllProducts = catchAsyncError(async (req, res, next) => {
       .populate("category")
       .populate("subcategory"),
     req.query
-  )
-    // .pagination()
-    // .limit()
-    // .fields()
-    // .filteration()
-    // .search()
-    // .sort();
+  );
+  // .pagination()
+  // .limit()
+  // .fields()
+  // .filteration()
+  // .search()
+  // .sort();
 
   // Await the final mongoose query with all features applied
   const getAllProducts = await apiFeature.mongooseQuery;
@@ -169,11 +169,10 @@ const getSpecificProduct = catchAsyncError(async (req, res, next) => {
 
 const updateProduct = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
+
   if (req.body.title) {
     req.body.slug = slugify(req.body.title);
   }
-
-  console.log(req.body);
 
   const updateProduct = await productModel.findByIdAndUpdate(id, req.body, {
     new: true,
@@ -262,6 +261,37 @@ const deleteSellerProduct = async (req, res, next) => {
   }
 };
 
+// Add a review for a product
+const addReview = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { rating, reviewText } = req.body;
+    const userId = req.user._id;
+    const name = req.user.name;
+
+    // Find the product by ID
+    const product = await productModel.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found." });
+    }
+
+    // Add review to the product
+    product.reviews.push({ user: userId, username: name, rating, reviewText });
+
+    // Update the total rating and average rating
+    product.totalRating += rating;
+    product.rating = product.totalRating / product.reviews.length;
+
+    await product.save();
+
+    res.status(201).json({ message: "Review added successfully.", product });
+  } catch (error) {
+    console.error("Error adding review:", error);
+    res.status(500).json({ message: "Error adding review. Please try again." });
+  }
+};
+
 const deleteProduct = deleteOne(productModel, "Product");
 export {
   addProduct,
@@ -277,4 +307,5 @@ export {
   updateSellerProduct,
   deleteSellerProduct,
   getSizesWithPrices,
+  addReview,
 };
