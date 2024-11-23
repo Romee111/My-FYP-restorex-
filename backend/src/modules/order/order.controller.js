@@ -252,7 +252,7 @@ export const getOrderById = async (req, res) => {
   const productIds = products.map(product => product._id);
 
   // Step 2: Find orders for these products
-  const orders = await OrderModel.find({ productId: { $in: productIds } }).populate('customerId');
+  const orders = await orderModel.find({ productId: { $in: productIds } }).populate('customerId');
 
   if (!orders || orders.length === 0) {
     return res.status(404).json({ message: "No customers found for this seller's products" });

@@ -1,4 +1,5 @@
 import { Schema, model } from "mongoose";
+import { NotificationModel } from "./notification.model.js";
 
 const categorySchema = new Schema(
   {
@@ -19,9 +20,19 @@ const categorySchema = new Schema(
   },
   { timestamps: true }
 );
-// categorySchema.post('init',function(doc){
-//   doc.Image = `${process.env.BASE_URL}category/${doc.Image}`
-//   console.log(doc);
 
-// })
+// Post-hook to create notification
+categorySchema.post("save", async function (doc) {
+  try {
+    await NotificationModel.create({
+      recipient: null,
+      message: `A new category "${doc.name}" has been added.`,
+      type: "created",
+    });
+    console.log("Notification created for new category.");
+  } catch (error) {
+    console.error("Error creating notification:", error);
+  }
+});
+
 export const categoryModel = model("category", categorySchema);

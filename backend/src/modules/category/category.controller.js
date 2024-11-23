@@ -15,8 +15,23 @@ const addCategory = catchAsyncError(async (req, res, next) => {
   res.status(201).json({ message: "success", addcategory });
 });
 
+const getCategoryWithId = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+
+  const category = await categoryModel.findById(id);
+
+  if (!category) {
+    return next(new AppError("Category not found", 404));
+  }
+
+  res.status(200).json({ message: "success", category });
+});
+
 const getAllCategories = catchAsyncError(async (req, res, next) => {
-  let apiFeature = new ApiFeatures(categoryModel.find(), req.query)
+  let apiFeature = new ApiFeatures(
+    categoryModel.find().sort({ updatedAt: -1 }),
+    req.query
+  )
     .pagination()
     .fields()
     .filteration()
@@ -49,4 +64,10 @@ const updateCategory = catchAsyncError(async (req, res, next) => {
 });
 
 const deleteCategory = deleteOne(categoryModel, "category");
-export { addCategory, getAllCategories, updateCategory, deleteCategory };
+export {
+  addCategory,
+  getCategoryWithId,
+  getAllCategories,
+  updateCategory,
+  deleteCategory,
+};

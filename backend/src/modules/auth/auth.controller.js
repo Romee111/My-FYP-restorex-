@@ -1,33 +1,50 @@
-
-
-import userModel  from "../../../Database/models/user.model.js";
+import userModel from "../../../Database/models/user.model.js";
 import { AppError } from "../../utils/AppError.js";
 import { catchAsyncError } from "../../utils/catchAsyncError.js";
 import { sendSignupEmail } from "../../utils/emailsender.js";
-import jwt from "jsonwebtoken"; 
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
-
-
+import Request from "../../../Database/models/request.model.js";
 const signUp = catchAsyncError(async (req, res, next) => {
-  // console.log(req.body.email);
+  // Check if the email already exists
   let isUserExist = await userModel.findOne({ email: req.body.email });
   if (isUserExist) {
-    return next(new AppError("Account is already exist!", 409));
+    return next(new AppError("Account already exists!", 409));
   }
-  console.log(req.body);
-  
+
+  // Create a new user
   const user = new userModel(req.body);
   await user.save();
 
-  let token = jwt.sign(
+  // Generate JWT token
+  const token = jwt.sign(
     { email: user.email, name: user.name, id: user._id, role: user.role },
     "JR"
   );
+
+  // Send signup email to the user
   await sendSignupEmail(req.body.email, user._id);
+
+  // If the user is a seller, create an unapproved request
+  if (user.role === "seller") {
+    const newRequest = new Request({
+      sellerId: user._id,
+      requestType: "signup",
+      requestDetails: `New seller "${user.name}" has registered with email "${user.email}".`,
+      status: "pending",
+    });
+
+    // Save the request to the database
+    await newRequest.save();
+    console.log("New seller signup request created.");
+  }
+
+  // Respond to the client
   res.status(201).json({ message: "success", user, token });
 });
+
 
 const signIn = catchAsyncError(async (req, res, next) => {
   const { email, password } = req.body;
@@ -42,7 +59,7 @@ const signIn = catchAsyncError(async (req, res, next) => {
     { email: user.email, name: user.name, id: user._id, role: user.role },
     "JR"
   );
-  res.status(201).json({ message: "success", token , user});
+  res.status(201).json({ message: "success", token, user });
 });
 
 const protectedRoutes = catchAsyncError(async (req, res, next) => {
@@ -50,7 +67,7 @@ const protectedRoutes = catchAsyncError(async (req, res, next) => {
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return next(new AppError("Token was not provided!", 401));
   }
-  
+
   const token = authHeader.split(" ")[1]; // Extract the token after 'Bearer'
   let decoded;
   try {
@@ -58,10 +75,10 @@ const protectedRoutes = catchAsyncError(async (req, res, next) => {
   } catch (error) {
     return next(new AppError("Invalid token", 401));
   }
-  
+
   let user = await userModel.findById(decoded.id);
   if (!user) return next(new AppError("Invalid user", 404));
-  
+
   if (user.passwordChangedAt) {
     let passwordChangedAt = parseInt(user.passwordChangedAt.getTime() / 1000);
     if (passwordChangedAt > decoded.iat)
@@ -72,10 +89,9 @@ const protectedRoutes = catchAsyncError(async (req, res, next) => {
   next();
 });
 
-
 const allowedTo = (...roles) => {
   return catchAsyncError(async (req, res, next) => {
-    if (!roles.includes(req.user.role))
+    if (!roles.some((role) => role?.toLowerCase().includes(req.user.role)))
       return next(
         new AppError(
           "You are not authorized to access this route. Your are ${req.user.role}",
@@ -180,16 +196,16 @@ const forgetPassword = catchAsyncError(async (req, res, next) => {
   });
 });
 
-
 const resetPassword = catchAsyncError(async (req, res, next) => {
   // Extract token from the Authorization header
-  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+  const token =
+    req.headers.authorization && req.headers.authorization.split(" ")[1];
 
   if (!token) {
-      return res.status(400).json({
-          status: "fail",
-          message: "Token must be provided"
-      });
+    return res.status(400).json({
+      status: "fail",
+      message: "Token must be provided",
+    });
   }
 
   // Verify the reset token
@@ -198,10 +214,10 @@ const resetPassword = catchAsyncError(async (req, res, next) => {
   // Find the user by ID from the decoded token
   const user = await userModel.findById(decoded.id);
   if (!user) {
-      return res.status(401).json({
-          status: "fail",
-          message: "Invalid token"
-      });
+    return res.status(401).json({
+      status: "fail",
+      message: "Invalid token",
+    });
   }
 
   // Hash the new password
@@ -213,12 +229,16 @@ const resetPassword = catchAsyncError(async (req, res, next) => {
 
   // Send success response
   res.status(200).json({
-      status: "success",
-      message: "Password reset successfully"
+    status: "success",
+    message: "Password reset successfully",
   });
 });
 
-
-
-
-export { signUp, signIn, protectedRoutes, allowedTo, forgetPassword, resetPassword };
+export {
+  signUp,
+  signIn,
+  protectedRoutes,
+  allowedTo,
+  forgetPassword,
+  resetPassword,
+};

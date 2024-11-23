@@ -18,24 +18,25 @@ categoryRouter
   .route("/addCategory")
   .post(
     protectedRoutes,
-    allowedTo("admin",),
+    allowedTo("admin"),
     uploadSingleFile("Image", "category"),
     validate(addCategoryValidation),
     category.addCategory
-  )
-  categoryRouter
-  .route("/getAllCategories")
-  .get(category.getAllCategories);
+  );
+
+categoryRouter.route("/getCategory/:id").get(category.getCategoryWithId);
+
+categoryRouter.route("/getAllCategories").get(category.getAllCategories);
 
 categoryRouter
   .route("/updateCategory/:id")
   .put(
     protectedRoutes,
-    allowedTo("admin",),
+    allowedTo("admin"),
     validate(updateCategoryValidation),
     category.updateCategory
-  )
-  categoryRouter
+  );
+categoryRouter
   .route("/deleteCategory/:id")
   .delete(
     protectedRoutes,
