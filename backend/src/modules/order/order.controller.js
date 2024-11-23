@@ -6,6 +6,8 @@
 //import axios from "axios";
 import { OrderModel } from "../../../Database/models/order.model.js";
 import { cartModel } from "../../../Database/models/cart.model.js";
+import {catchAsyncError} from "../../utils/catchAsyncError.js";
+import { productModel } from "../../../Database/models/product.model.js";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
 const stripe = new Stripe(`sk_test_51QMs3Z2NEZLb2kYBwKbWNuoIsRWfNflKxVjEsWVOssJWH2qHaMmQneCcnIDXzCFqfVsb20Gm9Q4giQWFSUl5Fh1g00JRSGevUl`); // Replace with your Stripe key
@@ -235,3 +237,36 @@ export const getOrderById = async (req, res) => {
     res.status(500).json({ message: "Error retrieving order", error: error.message });
   }
 };
+
+
+ export const getCustomersBySellerId = catchAsyncError(async (req, res, next) => {
+  const { sellerId } = req.params; // Get the seller ID from request params
+
+  // Step 1: Find all products created by the seller
+  const products = await productModel.find({ CreatedBy: sellerId });
+  if (!products || products.length === 0) {
+    return res.status(404).json({ message: "No products found for this seller" });
+  }
+
+  // Extract product IDs
+  const productIds = products.map(product => product._id);
+
+  // Step 2: Find orders for these products
+  const orders = await OrderModel.find({ productId: { $in: productIds } }).populate('customerId');
+
+  if (!orders || orders.length === 0) {
+    return res.status(404).json({ message: "No customers found for this seller's products" });
+  }
+
+  // Step 3: Extract unique customer details
+  const customers = orders.map(order => order.customerId);
+  const uniqueCustomers = Array.from(new Set(customers.map(c => c._id.toString()))).map(
+    id => customers.find(c => c._id.toString() === id)
+  );
+
+  // Step 4: Send response
+  res.status(200).json({
+    message: "success",
+    customers: uniqueCustomers,
+  });
+});

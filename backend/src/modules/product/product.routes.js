@@ -115,4 +115,8 @@ productRouter
     product.getSpecificProduct
   );
 
+productRouter
+.route("/getCustomersByProductId/:id")
+.get(product.getCustomersByProductId);
+
 export default productRouter;

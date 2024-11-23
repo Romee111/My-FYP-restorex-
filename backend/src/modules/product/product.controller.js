@@ -223,6 +223,18 @@ const deleteSellerProduct = async (req, res, next) => {
   }
 };
 
+const getCustomersByProductId = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+  const customers = await productModel.findById(id).populate('CreatedBy');
+  res.status(201).json({ message: "success", customers });
+});
+
+
+
+
+
+
+
 
 const deleteProduct = deleteOne(productModel, "Product");
 export {
@@ -238,7 +250,8 @@ export {
    getSellerProducts,
    updateSellerProduct,
    deleteSellerProduct,
-  getSizesWithPrices
+  getSizesWithPrices,
+  getCustomersByProductId
    };
 
 
