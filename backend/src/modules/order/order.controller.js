@@ -202,8 +202,8 @@ export const createOrder = async (req, res) => {
       const newOrder = new OrderModel(orderData);
       const savedOrder = await newOrder.save();
 
-      const clientSuccessUrl = `${process.env.FRONTEND_ORIGIN}/user/checkout/success`;
-      const clientCancelUrl = `${process.env.FRONTEND_ORIGIN}/user/checkout/cancel`;
+      const clientSuccessUrl = `${process.env.FRONTEND_ORIGIN}`;
+      const clientCancelUrl = `${process.env.FRONTEND_ORIGIN}`;
 
       const checkoutSession = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
