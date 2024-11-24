@@ -64,11 +64,11 @@ const userSchema = new Schema(
       bankName: { type: String },
       accountHolderName: { type: String },
       branchCode: { type: String },
-      documents: {
-        idCardNumber: { type: String, unique: true, sparse: true },
-        idImage1: { type: String }, // path or URL to the image
-        idImage2: { type: String }, // path or URL to the image
-      },
+      // documents: {
+      //   idCardNumber: { type: String, unique: true, sparse: true },
+      //   idImage1: { type: String }, // path or URL to the image
+      //   idImage2: { type: String }, // path or URL to the image
+      // },
     },
   },
   { timestamps: true }

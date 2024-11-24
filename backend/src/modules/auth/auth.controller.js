@@ -7,6 +7,7 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import Request from "../../../Database/models/request.model.js";
+
 const signUp = catchAsyncError(async (req, res, next) => {
   // Check if the email already exists
   let isUserExist = await userModel.findOne({ email: req.body.email });
