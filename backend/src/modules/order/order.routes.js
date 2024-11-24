@@ -66,18 +66,18 @@ const orderRouter = express.Router();
   )
 
   orderRouter
-  .route("/getOrdersForSeller/:id")
+  .route("/getOrdersForSeller")
   .get(
     protectedRoutes,
     allowedTo("seller"),
     order.getOrdersForSeller
   )
   orderRouter
-  .route("/getCustomersBySellerId/:id")
+  .route("/getCustomersBySeller")
   .get(
     protectedRoutes,
     allowedTo("seller"),
-    order.getCustomersBySellerId
+    order.getCustomersBySeller
   )
 
   orderRouter
