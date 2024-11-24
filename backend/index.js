@@ -1,7 +1,7 @@
 import express from "express";
 import { dbConnection } from "./Database/dbConnection.js";
 import { bootstrap } from "./src/bootstrap.js";
-import dotenv from "dotenv";
+import { configDotenv } from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
 import { File } from "formdata-polyfill/esm.min.js";
@@ -14,7 +14,8 @@ import {
   protectedRoutes,
 } from "./src/modules/auth/auth.controller.js";
 
-dotenv.config();
+configDotenv();
+
 const app = express();
 app.use(cors());
 const storage = multer.memoryStorage();
@@ -98,12 +99,12 @@ app.post(
       });
     } catch (error) {
       console.error("Error uploading file:", error);
-      res.status(500).json({ error: `Failed to upload file to Pinata ${JSON.stringify(error)}` });
+      res.status(500).json({
+        error: `Failed to upload file to Pinata ${JSON.stringify(error)}`,
+      });
     }
   }
 );
-
-
 
 // Bootstrap, Database Connection and Server Listening
 bootstrap(app);

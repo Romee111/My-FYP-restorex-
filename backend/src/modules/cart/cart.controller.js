@@ -32,6 +32,8 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
 
   req.body.cartItem[0].price = product.price; // Set price directly in cartItem array
 
+  console.log(req.body);
+
   // Check if cart exists for the user
   let isCartExist = await cartModel.findOne({ userId: req.user._id });
   if (!isCartExist) {
@@ -40,9 +42,9 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
       cartItem: [
         {
           productId: productId,
-          title: req.body.cartItem[0].producttitle,
-          color: req.body.cartItem[0].productColor,
-          size: req.body.cartItem[0].productSize,
+          title: req.body.cartItem[0].title,
+          color: req.body.cartItem[0].color,
+          size: req.body.cartItem[0].size,
           quantity: req.body.cartItem[0].quantity,
           price: req.body.cartItem[0].price,
           totalProductDiscount: req.body.cartItem[0].totalProductDiscount,
@@ -64,9 +66,9 @@ const addProductToCart = catchAsyncError(async (req, res, next) => {
   } else {
     isCartExist.cartItem.push({
       productId: productId,
-      title: req.body.cartItem[0].producttitle,
-      color: req.body.cartItem[0].productColor,
-      size: req.body.cartItem[0].productSize,
+      title: req.body.cartItem[0].title,
+      color: req.body.cartItem[0].color,
+      size: req.body.cartItem[0].size,
       quantity: req.body.cartItem[0].quantity,
       price: req.body.cartItem[0].price,
       totalProductDiscount: req.body.cartItem[0].totalProductDiscount,

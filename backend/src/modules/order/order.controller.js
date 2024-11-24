@@ -5,12 +5,14 @@ import { catchAsyncError } from "../../utils/catchAsyncError.js";
 import { productModel } from "../../../Database/models/product.model.js";
 import Stripe from "stripe";
 import nodemailer from "nodemailer";
-import mongoose from "mongoose";
 import userModel from "../../../Database/models/user.model.js";
 import { NotificationModel } from "../../../Database/models/notification.model.js";
+import { configDotenv } from "dotenv";
 const stripe = new Stripe(
   `sk_test_51QMs3Z2NEZLb2kYBwKbWNuoIsRWfNflKxVjEsWVOssJWH2qHaMmQneCcnIDXzCFqfVsb20Gm9Q4giQWFSUl5Fh1g00JRSGevUl`
 ); // Replace with your Stripe key
+
+configDotenv();
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -20,18 +22,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.PASSWORD,
   },
 });
-
-// const getExchangeRate = async () => {
-//   const response = await fetch(
-//     "https://api.exchangerate-api.com/v4/latest/USD"
-//   );
-//   const data = await response.json();
-//   return data.rates.PKR;
-// };
-// const totalAmountInPKR = Math.round(totalAmount * exchangeRate * 100);
-//  // Convert totalAmount to PKR
-
-// const exchangeRate = await getExchangeRate(); // Fetch the real-time exchange rate
 
 export const createOrder = async (req, res) => {
   try {
@@ -62,24 +52,22 @@ export const createOrder = async (req, res) => {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      console.log(updatedOrder.isPaid);
-
       // Send order confirmation email
-      // const user = await userModel.findById(userId);
-      // const mailOptions = {
-      //   from: process.env.EMAIL,
-      //   to: user.email,
-      //   subject: "Payment Confirmation",
-      //   text: `Hi ${user.name},\n\nYour payment for order ID ${updatedOrder._id} was successful. We will process your order shortly.\n\nRegards,\nYour Store Team`,
-      // };
+      const user = await userModel.findById(userId);
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: user.email,
+        subject: "Payment Confirmation",
+        text: `Hi ${user.name},\n\nYour payment for order ID ${updatedOrder._id} was successful. We will process your order shortly.\n\nRegards,\nYour Store Team`,
+      };
 
-      // transporter.sendMail(mailOptions, (err, info) => {
-      //   if (err) {
-      //     console.error("Error sending email:", err);
-      //   } else {
-      //     console.log("Email sent:", info.response);
-      //   }
-      // });
+      transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+          console.error("Error sending email:", err);
+        } else {
+          console.log("Email sent:", info.response);
+        }
+      });
 
       // Create notification for payment success
       const paymentSuccessMessage = `Your payment for order ID ${updatedOrder._id} was successful. Your order will be processed shortly.`;
@@ -119,20 +107,20 @@ export const createOrder = async (req, res) => {
 
       // Send delivery confirmation email
       const user = await userModel.findById(userId);
-      // const mailOptions = {
-      //   from: process.env.EMAIL,
-      //   to: user.email,
-      //   subject: "Order Delivered",
-      //   text: `Hi ${user.name},\n\nYour order ID ${existingOrder._id} has been successfully delivered.\n\nRegards,\nYour Store Team`,
-      // };
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: user.email,
+        subject: "Order Delivered",
+        text: `Hi ${user.name},\n\nYour order ID ${existingOrder._id} has been successfully delivered.\n\nRegards,\nYour Store Team`,
+      };
 
-      // transporter.sendMail(mailOptions, (err, info) => {
-      //   if (err) {
-      //     console.error("Error sending email:", err);
-      //   } else {
-      //     console.log("Email sent:", info.response);
-      //   }
-      // });
+      transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+          console.error("Error sending email:", err);
+        } else {
+          console.log("Email sent:", info.response);
+        }
+      });
 
       // Create notification for delivery success
       const deliverySuccessMessage = `Your order ID ${existingOrder._id} has been successfully delivered.`;
@@ -224,6 +212,8 @@ export const createOrder = async (req, res) => {
         success_url: `${clientSuccessUrl}?check_success=payment&orderId=${savedOrder._id}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${clientCancelUrl}?check_cancel=payment&orderId=${savedOrder._id}`,
       });
+
+      await cartModel.findByIdAndDelete(cart._id);
 
       // Save payment URL in the order data
       orderData.paymentURL = checkoutSession.url;
@@ -560,15 +550,21 @@ export async function updateOrderTracking(req, res) {
     const { orderId, status, location } = req.body;
 
     // Validate status
-    const validStatuses = ['created', 'shipped', 'in_transit', 'delivered', 'returned'];
+    const validStatuses = [
+      "created",
+      "shipped",
+      "in_transit",
+      "delivered",
+      "returned",
+    ];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
+      return res.status(400).json({ message: "Invalid status" });
     }
 
     // Find the order by ID
     const order = await OrderModel.findById(orderId);
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({ message: "Order not found" });
     }
 
     // Update the tracking information
@@ -580,23 +576,23 @@ export async function updateOrderTracking(req, res) {
     await order.save();
 
     return res.status(200).json({
-      message: 'Order tracking updated successfully',
+      message: "Order tracking updated successfully",
       tracking: order.tracking,
     });
   } catch (error) {
-    console.error('Error updating order tracking:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Error updating order tracking:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 }
 
-export  async function getOrderTracking(req, res) {
+export async function getOrderTracking(req, res) {
   try {
     const { orderId } = req.params;
 
     // Find the order by ID
     const order = await OrderModel.findById(orderId);
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({ message: "Order not found" });
     }
 
     return res.status(200).json({
@@ -604,8 +600,8 @@ export  async function getOrderTracking(req, res) {
       tracking: order.tracking,
     });
   } catch (error) {
-    console.error('Error fetching order tracking:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Error fetching order tracking:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -616,28 +612,30 @@ export async function returnOrder(req, res) {
     // Find the order by ID
     const order = await OrderModel.findById(orderId);
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({ message: "Order not found" });
     }
 
     // Check if the order is already returned
     if (order.isReturned) {
-      return res.status(400).json({ message: 'Order has already been returned' });
+      return res
+        .status(400)
+        .json({ message: "Order has already been returned" });
     }
 
     // Set the order as returned and set the return requested flag
     order.isReturned = true;
     order.returnRequested = true;
-    order.returnDate = new Date();  // Set the return date
+    order.returnDate = new Date(); // Set the return date
 
     // Save the updated order
     await order.save();
 
     return res.status(200).json({
-      message: 'Return request successful',
+      message: "Return request successful",
       order: order,
     });
   } catch (error) {
-    console.error('Error processing return:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Error processing return:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 }
