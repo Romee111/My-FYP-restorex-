@@ -264,18 +264,11 @@ const deleteSellerProduct = async (req, res, next) => {
   }
 };
 
-
 const getCustomersByProductId = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
-  const customers = await productModel.findById(id).populate('CreatedBy');
+  const customers = await productModel.findById(id).populate("CreatedBy");
   res.status(201).json({ message: "success", customers });
 });
-
-
-
-
-
-
 
 // Add a review for a product
 const addReview = async (req, res) => {
@@ -317,16 +310,14 @@ export {
   deleteProduct,
   getProductsBySellerId,
   getProductsById,
-   newArrivals,
-   getSellerProducts,
-   updateSellerProduct,
-   deleteSellerProduct,
+  newArrivals,
+  getSellerProducts,
+  updateSellerProduct,
+  deleteSellerProduct,
   getSizesWithPrices,
   getCustomersByProductId,
-   addReview
-   };
-
-
+  addReview,
+};
 
 //   getProductsById,
 //   newArrivals,
@@ -336,4 +327,3 @@ export {
 //   getSizesWithPrices,
 //   addReview,
 // ;
-

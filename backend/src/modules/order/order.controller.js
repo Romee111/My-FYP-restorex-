@@ -450,7 +450,6 @@ export const getOrderById = async (req, res) => {
 };
 
 export const getOrdersForSeller = async (req, res) => {
-  // Check if the user is a seller
   if (req?.user?.role !== "seller") {
     return res
       .status(403)
@@ -460,25 +459,36 @@ export const getOrdersForSeller = async (req, res) => {
   const sellerId = req.user._id;
 
   try {
-    // Find orders where products in the cart were created by the seller
-    const orders = await OrderModel.find({
-      "cartId.products.createdBy": sellerId,
-    })
-      .populate({
-        path: "cartId",
-        populate: {
-          path: "products", // Assuming `products` is an array of references in the cart schema
-          model: "Product", // Ensure the correct model is used
-        },
-      })
-      .populate("userId"); // Populate customer details for each order
+    // Step 1: Find all products created by the seller
+    const products = await productModel.find({ createdBy: sellerId });
 
-    if (orders.length === 0) {
+    if (!products || products.length === 0) {
       return res
         .status(404)
-        .json({ message: "No orders found for this seller" });
+        .json({ message: "No products found for this seller" });
     }
 
+    // Extract product IDs
+    const productIds = products.map((product) => product._id);
+
+    // Step 2: Find orders containing these products
+    const orders = await OrderModel.find({
+      "products.productId": { $in: productIds }, // Match product IDs in the orders
+    })
+      // .populate({
+      //   path: "products.productId",
+      //   model: "product",
+      // })
+      .populate("userId") // Populate customer details for each order
+      .populate("tracking"); // Populate tracking information
+
+    if (!orders || orders.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No orders found for this seller's products" });
+    }
+
+    // Step 3: Send response
     res.status(200).json({
       message: "Orders retrieved successfully for the seller",
       orders,
@@ -493,7 +503,6 @@ export const getOrdersForSeller = async (req, res) => {
 };
 
 export const getCustomersBySeller = catchAsyncError(async (req, res, next) => {
-  // Check if the user is a seller
   if (req?.user?.role !== "seller") {
     return res
       .status(403)
@@ -503,21 +512,22 @@ export const getCustomersBySeller = catchAsyncError(async (req, res, next) => {
   const sellerId = req.user._id;
 
   try {
-    // Step 1: Find all products created by the seller
     const products = await productModel.find({ createdBy: sellerId });
+
     if (!products || products.length === 0) {
       return res
         .status(404)
         .json({ message: "No products found for this seller" });
     }
 
-    // Extract product IDs
     const productIds = products.map((product) => product._id);
 
-    // Step 2: Find orders containing these products
     const orders = await OrderModel.find({
-      "cartId.products.productId": { $in: productIds }, // Match products created by the seller
-    }).populate("userId"); // Populate customer details for each order
+      "products.productId": { $in: productIds },
+    })
+      .populate("userId")
+      .populate("tracking")
+      .populate("Installments");
 
     if (!orders || orders.length === 0) {
       return res
@@ -525,13 +535,11 @@ export const getCustomersBySeller = catchAsyncError(async (req, res, next) => {
         .json({ message: "No customers found for this seller's products" });
     }
 
-    // Step 3: Extract unique customer details
     const customers = orders.map((order) => order.userId);
     const uniqueCustomers = Array.from(
       new Set(customers.map((c) => c._id.toString()))
     ).map((id) => customers.find((c) => c._id.toString() === id));
 
-    // Step 4: Send response
     res.status(200).json({
       message: "success",
       customers: uniqueCustomers,
