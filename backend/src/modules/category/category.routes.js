@@ -33,6 +33,7 @@ categoryRouter
   .put(
     protectedRoutes,
     allowedTo("admin"),
+    uploadSingleFile("Image", "category"),
     validate(updateCategoryValidation),
     category.updateCategory
   );
