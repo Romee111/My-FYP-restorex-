@@ -7,6 +7,7 @@ import Stripe from "stripe";
 import nodemailer from "nodemailer";
 import mongoose from "mongoose";
 import userModel from "../../../Database/models/user.model.js";
+import { NotificationModel } from "../../../Database/models/notification.model.js";
 const stripe = new Stripe(
   `sk_test_51QMs3Z2NEZLb2kYBwKbWNuoIsRWfNflKxVjEsWVOssJWH2qHaMmQneCcnIDXzCFqfVsb20Gm9Q4giQWFSUl5Fh1g00JRSGevUl`
 ); // Replace with your Stripe key
@@ -44,69 +45,160 @@ export const createOrder = async (req, res) => {
       delivered,
     } = req.body;
 
-    // Validate that the required fields are present
-    if (
-      !userId ||
-      !cartId ||
-      !shippingAddress ||
-      !paymentMethod ||
-      !totalAmount
-    ) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
+    console.log(req.body);
 
-    // Fetch the cart items using the cartId
-    const cart = await cartModel
-      .findById(cartId)
-      .populate("cartItem.productId");
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found" });
-    }
+    // Case 1: Payment is 'success' and delivery is not 'success'
+    if (payment === "success" && delivered !== "success") {
+      // Only update isPaid to true and send related notifications
+      // const existingOrder = await OrderModel.findOne({ userId });
 
-    // Check if the order has already been paid or delivered
-    const existingOrder = await OrderModel.findOne({ userId, cartId });
-    if (existingOrder && (existingOrder.isPaid || existingOrder.isDelivered)) {
-      return res.status(400).json({
-        message:
-          "Order has already been paid or delivered. No further actions allowed.",
+      const updatedOrder = await OrderModel.findOneAndUpdate(
+        { userId }, // Filter
+        { isPaid: true, paidAt: new Date() }, // Update
+        { new: true } // Return the updated document
+      );
+
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      console.log(updatedOrder.isPaid);
+
+      // Send order confirmation email
+      // const user = await userModel.findById(userId);
+      // const mailOptions = {
+      //   from: process.env.EMAIL,
+      //   to: user.email,
+      //   subject: "Payment Confirmation",
+      //   text: `Hi ${user.name},\n\nYour payment for order ID ${updatedOrder._id} was successful. We will process your order shortly.\n\nRegards,\nYour Store Team`,
+      // };
+
+      // transporter.sendMail(mailOptions, (err, info) => {
+      //   if (err) {
+      //     console.error("Error sending email:", err);
+      //   } else {
+      //     console.log("Email sent:", info.response);
+      //   }
+      // });
+
+      // Create notification for payment success
+      const paymentSuccessMessage = `Your payment for order ID ${updatedOrder._id} was successful. Your order will be processed shortly.`;
+      const paymentNotification = new NotificationModel({
+        recipient: userId,
+        message: paymentSuccessMessage,
+        type: "order",
+        read: false,
+      });
+
+      await paymentNotification.save();
+
+      return res.status(200).json({
+        message: "Payment successful and order updated",
+        order: updatedOrder,
       });
     }
 
-    // Extract products from cart and prepare order products
-    const products = cart.cartItem.map((item) => ({
-      productId: item.productId,
-      quantity: item.quantity,
-      title: item.title,
-      color: item.color,
-      size: item.size,
-      price: item.price,
-      totalProductDiscount: item.totalProductDiscount,
-    }));
+    // Case 2: Payment is not 'success' and delivery is 'success'
+    if (payment !== "success" && delivered === "success") {
+      // Only update isDelivered to true and send related notifications
+      const existingOrder = await OrderModel.findOne({ userId, orderId });
+      if (!existingOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
 
-    const orderData = {
-      userId,
-      cartId,
-      shippingAddress,
-      paymentMethod,
-      totalAmount,
-      products,
-    };
+      // Update the delivery status and set the delivery date
+      existingOrder.isDelivered = true;
+      existingOrder.deliveredAt = new Date(); // Set the delivery date
 
-    // Handle payment logic only if payment hasn't been marked as 'success' already
-    if (payment === "success") {
-      orderData.isPaid = true;
+      // Optionally, mark fields explicitly as modified if necessary
+      existingOrder.markModified("isDelivered");
+      existingOrder.markModified("deliveredAt");
+
+      // Save the updated order
+      await existingOrder.save();
+
+      // Send delivery confirmation email
+      const user = await userModel.findById(userId);
+      // const mailOptions = {
+      //   from: process.env.EMAIL,
+      //   to: user.email,
+      //   subject: "Order Delivered",
+      //   text: `Hi ${user.name},\n\nYour order ID ${existingOrder._id} has been successfully delivered.\n\nRegards,\nYour Store Team`,
+      // };
+
+      // transporter.sendMail(mailOptions, (err, info) => {
+      //   if (err) {
+      //     console.error("Error sending email:", err);
+      //   } else {
+      //     console.log("Email sent:", info.response);
+      //   }
+      // });
+
+      // Create notification for delivery success
+      const deliverySuccessMessage = `Your order ID ${existingOrder._id} has been successfully delivered.`;
+      const deliveryNotification = new NotificationModel({
+        recipient: userId,
+        message: deliverySuccessMessage,
+        type: "order",
+        read: false,
+      });
+
+      await deliveryNotification.save();
+
+      return res.status(200).json({
+        message: "Order delivered successfully and updated",
+        order: existingOrder,
+      });
     }
 
-    // Handle delivery logic only if it hasn't been marked as 'success' already
-    if (delivered === "success") {
-      orderData.isDelivered = true;
-      orderData.deliveredAt = new Date(); // Set the delivery date
-    }
+    // Case 3: Payment is not 'success' and delivery is not 'success'
+    if (payment !== "success" && delivered !== "success") {
+      // Check if the order already exists
+      const existingOrder = await OrderModel.findOne({ userId, cartId });
+      if (existingOrder) {
+        return res.status(400).json({
+          message: "Order already placed. Please check your order status.",
+        });
+      }
 
-    // If payment is not 'success' and not already delivered, proceed to payment
-    if (payment !== "success" && !delivered) {
-      // Process payment (e.g., using Stripe or another payment provider)
-      const totalAmountInPKR = Math.round(totalAmount * 286 * 100); // Assuming USD to PKR conversion rate
+      // Fetch the cart items using the cartId
+      const cart = await cartModel
+        .findById(cartId)
+        .populate("cartItem.productId");
+      if (!cart) {
+        return res.status(404).json({ message: "Cart not found" });
+      }
+
+      // Extract products from cart and prepare order products
+      const products = cart?.cartItem?.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        title: item.title,
+        color: item.color,
+        size: item.size,
+        price: item.price,
+        totalProductDiscount: item.totalProductDiscount,
+      }));
+
+      const orderData = {
+        userId,
+        cartId,
+        shippingAddress,
+        paymentMethod,
+        totalAmount,
+        products,
+      };
+
+      // Create order and generate payment link if payment is not 'success'
+      const totalAmountInPKR = Math.round(totalAmount * 100);
+
+      if (totalAmountInPKR > 99999999) {
+        return res.status(400).json({
+          message:
+            "The order amount is too large. Please reduce the cart size.",
+        });
+      }
+
       const lineItems = [
         {
           price_data: {
@@ -118,85 +210,30 @@ export const createOrder = async (req, res) => {
         },
       ];
 
-      const clientSuccessUrl = `${process.env.FRONTEND_ORIGIN}//user/checkout/success`;
+      // Save order in the database
+      const newOrder = new OrderModel(orderData);
+      const savedOrder = await newOrder.save();
+
+      const clientSuccessUrl = `${process.env.FRONTEND_ORIGIN}/user/checkout/success`;
       const clientCancelUrl = `${process.env.FRONTEND_ORIGIN}/user/checkout/cancel`;
 
       const checkoutSession = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         mode: "payment",
         line_items: lineItems,
-        success_url: `${clientSuccessUrl}?check_success=payment&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${clientCancelUrl}?check_cancel=payment`,
+        success_url: `${clientSuccessUrl}?check_success=payment&orderId=${savedOrder._id}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${clientCancelUrl}?check_cancel=payment&orderId=${savedOrder._id}`,
       });
 
-      // Save the payment URL in the order data
+      // Save payment URL in the order data
       orderData.paymentURL = checkoutSession.url;
-    }
 
-    // Save order in the database
-    const newOrder = new OrderModel(orderData);
-    const savedOrder = await newOrder.save();
-
-    // Send order confirmation email
-    const user = await userModel.findById(userId); // Get user details
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: user.email,
-      subject: "Order Confirmation",
-      text: `Hi ${user.name},\n\nThank you for your order. Your order ID is ${savedOrder._id}.\nTotal Amount: $${totalAmount}\n\nRegards,\nYour Store Team`,
-    };
-
-    transporter.sendMail(mailOptions, (err, info) => {
-      if (err) {
-        console.error("Error sending email:", err);
-      } else {
-        console.log("Email sent:", info.response);
-      }
-    });
-
-    // Handle payment success if payment === "success"
-    if (payment === "success") {
-      savedOrder.isPaid = true; // Mark the order as paid
-      await savedOrder.save();
-
-      // Send payment success notification to the user
-      const paymentSuccessMessage = `Your payment for order ID ${savedOrder._id} was successful. Your order will be processed shortly.`;
-      const paymentNotification = new NotificationModel({
-        recipient: userId, // The user who made the order
-        message: paymentSuccessMessage,
-        type: "order",
-        read: false,
+      return res.status(201).json({
+        message: "Order created successfully",
+        order: savedOrder,
+        paymentURL: checkoutSession.url,
       });
-
-      await paymentNotification.save();
     }
-
-    // Handle order delivery if delivered === "success"
-    if (delivered === "success") {
-      savedOrder.isDelivered = true; // Mark the order as delivered
-      savedOrder.deliveredAt = new Date(); // Set the delivery date
-      await savedOrder.save();
-
-      // Send order delivery notification to the user
-      const deliverySuccessMessage = `Your order ID ${savedOrder._id} has been successfully delivered.`;
-      const deliveryNotification = new NotificationModel({
-        recipient: userId, // The user who placed the order
-        message: deliverySuccessMessage,
-        type: "order",
-        read: false,
-      });
-
-      await deliveryNotification.save();
-    }
-
-    // Optionally clear the cart
-    await cartModel.deleteOne({ _id: cartId });
-
-    res.status(201).json({
-      message: "Order created successfully",
-      order: savedOrder,
-      paymentURL: orderData.paymentURL,
-    });
   } catch (error) {
     console.error("Error creating order:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -376,12 +413,14 @@ export const getAllOrders = async (req, res) => {
     // Check the role of the user
     if (req.user.role === "user") {
       // If the user is a normal user, retrieve orders for the logged-in user
-      orders = await OrderModel.find({ userId: req.user.id })
-        .populate("userId")
-        .populate("cartId");
+      orders = await OrderModel.find({ userId: req.user.id }).populate(
+        "userId"
+      );
+      // .populate("cartId");
     } else if (req.user.role === "admin") {
       // If the user is an admin, retrieve all orders
-      orders = await OrderModel.find().populate("userId").populate("cartId");
+      orders = await OrderModel.find().populate("userId");
+      // .populate("cartId");
     } else {
       return res.status(403).json({ message: "Unauthorized" }); // Unauthorized access
     }

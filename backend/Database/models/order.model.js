@@ -22,7 +22,11 @@ const orderSchema = new Schema({
     },
   ],
   shippingAddress: {
+    firstName: String,
+    lastName: String,
     street: String,
+    address: String,
+    zipCode: String,
     city: String,
     phone: Number,
   },
@@ -45,8 +49,6 @@ const orderSchema = new Schema({
       return this.paymentMethod === "installment";
     },
   },
-  paidAt: Date,
-  deliveredAt: Date,
 });
 
 export const OrderModel = mongoose.model("Order", orderSchema);
