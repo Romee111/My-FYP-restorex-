@@ -31,7 +31,7 @@ subCategoryRouter
   .put(
     protectedRoutes,
     allowedTo("admin"),
-    validate(updateSubCategoryValidation),
+   
     subCategory.updateSubCategory
   );
 subCategoryRouter

@@ -34,7 +34,7 @@ categoryRouter
     protectedRoutes,
     allowedTo("admin"),
     uploadSingleFile("Image", "category"),
-    validate(updateCategoryValidation),
+   
     category.updateCategory
   );
 categoryRouter

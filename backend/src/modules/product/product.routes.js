@@ -67,7 +67,7 @@ productRouter
   .put(
     protectedRoutes,
     allowedTo("admin", "seller"),
-    validate(updateProductValidation),
+  
     product.updateProduct
   );
 

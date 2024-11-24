@@ -28,6 +28,7 @@ userRouter.route("/deleteUser/:id").delete(
 
 userRouter
   .route("/updateUser/:id")
+  
   .put(protectedRoutes, allowedTo("admin", "user"), User.updateUser);
 userRouter
   .route("/changeUserPassword/:id")
