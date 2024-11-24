@@ -118,7 +118,7 @@ export const sendSignupEmail = async (email, userId) => {
     }
 
     // Generate a login link or an account activation link
-    const loginLink = `${process.env.FRONTEND_URL}/login?userId=${userId}`;
+    const loginLink = `https://ecommerce-react-ten-pi.vercel.app/signin`;
 
     const subject = "Welcome to Our Platform!";
     const message = `<h1>Thank you for signing up!</h1>
