@@ -13,9 +13,10 @@ import subCategoryRouter from "./modules/subcategory/subcategory.routes.js";
 import userRouter from "./modules/user/user.routes.js";
 import notificationRouter from "./modules/notification/notfication.routes.js";
 import emailRouter from "./modules/email/email.routes.js";
-// import wishListRouter from "./modules/wishlist/wishlist.routes.js";
+import walletRouter from "./modules/wallet/waller.route.js";// import wishListRouter from "./modules/wishlist/wishlist.routes.js";
 import queryRouter from "./modules/query/query.routes.js";
 import { AppError } from "./utils/AppError.js";
+
 
 export function bootstrap(app) {
   app.use("/restorex/categories", categoryRouter);
@@ -32,6 +33,7 @@ export function bootstrap(app) {
   app.use("/restorex/orders", orderRouter);
   app.use("/restorex/request", requestRouter); 
   app.use("/restorex/queries", queryRouter);
+  app.use("/restorex/wallet", walletRouter);
 
   app.all("*", (req, res, next) => {
     next(new AppError("Endpoint was not found", 404));

@@ -92,7 +92,7 @@ export const createOrder = async (req, res) => {
       const lineItems = [
         {
           price_data: {
-            currency: "usd",
+            currency: "pkr",
             product_data: { name: "Order Payment" },
             unit_amount: Math.round(totalAmount * 100),
           },
@@ -270,3 +270,90 @@ export const getOrderById = async (req, res) => {
     customers: uniqueCustomers,
   });
 });
+
+export async function updateOrderTracking(req, res) {
+  try {
+    const { orderId, status, location } = req.body;
+
+    // Validate status
+    const validStatuses = ['created', 'shipped', 'in_transit', 'delivered', 'returned'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    // Find the order by ID
+    const order = await OrderModel.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Update the tracking information
+    order.tracking.status = status;
+    order.tracking.location = location || order.tracking.location; // Location is optional
+    order.tracking.updatedAt = new Date(); // Update timestamp
+
+    // Save the updated order
+    await order.save();
+
+    return res.status(200).json({
+      message: 'Order tracking updated successfully',
+      tracking: order.tracking,
+    });
+  } catch (error) {
+    console.error('Error updating order tracking:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+export  async function getOrderTracking(req, res) {
+  try {
+    const { orderId } = req.params;
+
+    // Find the order by ID
+    const order = await OrderModel.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    return res.status(200).json({
+      orderId: order._id,
+      tracking: order.tracking,
+    });
+  } catch (error) {
+    console.error('Error fetching order tracking:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+export async function returnOrder(req, res) {
+  try {
+    const { orderId } = req.body;
+
+    // Find the order by ID
+    const order = await OrderModel.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Check if the order is already returned
+    if (order.isReturned) {
+      return res.status(400).json({ message: 'Order has already been returned' });
+    }
+
+    // Set the order as returned and set the return requested flag
+    order.isReturned = true;
+    order.returnRequested = true;
+    order.returnDate = new Date();  // Set the return date
+
+    // Save the updated order
+    await order.save();
+
+    return res.status(200).json({
+      message: 'Return request successful',
+      order: order,
+    });
+  } catch (error) {
+    console.error('Error processing return:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}

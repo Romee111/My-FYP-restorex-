@@ -79,6 +79,25 @@ const orderRouter = express.Router();
     allowedTo("seller"),
     order.getCustomersBySellerId
   )
+
+  orderRouter
+  .route("/updateOrderTracking/:id")
+  .post(
+    protectedRoutes,
+    allowedTo("admin"),
+    order.updateOrderTracking
+  )
+    
+  orderRouter
+  .route("/getOrderTracking/:id")
+  .get(
+    protectedRoutes,
+    allowedTo("user","admin","seller"),
+    order.getOrderTracking
+  )
+  orderRouter
+  .post("/returnOrder/:id", 
+    order.returnOrder)
   // orderRouter
   // .route("/validatePayment/:token")
   // .get(
