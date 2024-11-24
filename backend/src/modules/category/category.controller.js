@@ -53,9 +53,9 @@ const updateCategory = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
   req.body.slug = slugify(req.body.name);
-  req.body.image = req.file.filename;
+ 
   const updateCategory = await categoryModel.findByIdAndUpdate(id, req.body, {
-    
+
     new: true,
   });
 
