@@ -401,6 +401,7 @@ export const createOrder = async (req, res) => {
       price: item.price,
       totalProductDiscount: item.totalProductDiscount,
       createdBy: item.productId.createdBy,
+      dynamicDiscount: item.productId.dynamicDiscount
       
     }));
 
@@ -414,8 +415,31 @@ export const createOrder = async (req, res) => {
       discount = seller.discount;
     }
 
-    // Apply the seller's discount to the totalAmount
     const discountedAmount = totalAmount - (totalAmount * (discount / 100));
+
+    // Update the dynamic discount for each product
+    for (let product of products) {
+      const productId = product.productId._id;
+      const dynamicDiscount = product.dynamicDiscount;
+      
+      // Logic to decrease the dynamic discount (e.g., reduce by 1% for each sale)
+      const newDynamicDiscount = dynamicDiscount - 1; // Decrease by 1% or any value based on your logic
+
+      // Ensure that dynamicDiscount does not go below 0
+      if (newDynamicDiscount < 0) {
+        product.dynamicDiscount = 0;
+      } else {
+        product.dynamicDiscount = newDynamicDiscount;
+      }
+
+      // Update the product's dynamic discount in the database
+      await productModel.findByIdAndUpdate(productId, {
+        dynamicDiscount: product.dynamicDiscount,
+      });
+    } 
+ 
+    
+
 
     // Use discountedAmount in the order creation
     const orderData = {
