@@ -492,6 +492,7 @@ export const getOrdersForSeller = async (req, res) => {
     res.status(200).json({
       message: "Orders retrieved successfully for the seller",
       orders,
+      userId: req.user._id,
     });
   } catch (error) {
     console.error("Error retrieving seller orders:", error.message);
