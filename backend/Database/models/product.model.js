@@ -29,7 +29,15 @@ const productSchema = new Schema(
       type: Number,
       required: true,
     },
+    initialQuantity:{
+      type: Number,
+
+    },
     discount: {
+      type: Number,
+      default: 0,
+    },
+    dynamicDiscount: {
       type: Number,
       default: 0,
     },
@@ -57,6 +65,9 @@ const productSchema = new Schema(
       minlength: [10, "Description should be more than or equal to 10"],
       required: true,
       trim: true,
+    },
+    sold:{
+      type: Number,
     },
     category: {
       type: mongoose.Schema.Types.ObjectId,

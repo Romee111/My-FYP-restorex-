@@ -6,7 +6,7 @@ import { deleteOne } from "../../handlers/factor.js";
 import { productModel } from "./../../../Database/models/product.model.js";
 import { ApiFeatures } from "../../utils/ApiFeatures.js";
 
-// //   try {
+
 //     // If you're using file uploads (like with multer)
 //     // req.body.imgCover = req.files.imgCover[0].filename;
 //     // req.body.images = req.files.images.map((ele) => ele.filename);
@@ -33,31 +33,103 @@ import { ApiFeatures } from "../../utils/ApiFeatures.js";
 //   // Send response
 //   res.status(201).json({ message: "success", addProduct });
 // });
+// const addProduct = async (req, res, next) => {
+//   try {
+//     req.body.slug = slugify(req.body.title);
+
+//     // Set createdBy to the currently logged-in user (seller/admin)
+//     req.body.createdBy = req.user._id; // Assuming req.user contains the logged-in user's details
+
+//     // // Set the imgCover path if it exists
+//     // if (req.file) {
+//     //   req.body.imgCover = `${BASE_URL}/uploads/products/${req.file.filename}`;
+//     // }
+
+//     // // Set the images paths if they exist
+//     // if (req.files && req.files.images) {
+//     //   req.body.images = req.files.images.map(file => `${BASE_URL}/uploads/products/${file.filename}`);
+//     // }
+
+//     const newProduct = await productModel.create(req.body);
+//     res
+//       .status(201)
+//       .json({ message: "Product added successfully", product: newProduct });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 const addProduct = async (req, res, next) => {
   try {
     req.body.slug = slugify(req.body.title);
 
     // Set createdBy to the currently logged-in user (seller/admin)
-    req.body.createdBy = req.user._id; // Assuming req.user contains the logged-in user's details
+    req.body.createdBy = req.user._id;
 
-    // // Set the imgCover path if it exists
-    // if (req.file) {
-    //   req.body.imgCover = `${BASE_URL}/uploads/products/${req.file.filename}`;
-    // }
+    // Validate discount and quantity
+    if (req.body.discount && req.body.quantity) {
+      if (req.body.discount < 0 || req.body.discount > 100) {
+        return res.status(400).json({ message: "Discount must be between 0 and 100." });
+      }
+      if (req.body.quantity <= 0) {
+        return res.status(400).json({ message: "Quantity must be greater than 0." });
+      }
+    }
 
-    // // Set the images paths if they exist
-    // if (req.files && req.files.images) {
-    //   req.body.images = req.files.images.map(file => `${BASE_URL}/uploads/products/${file.filename}`);
-    // }
+    // Store the initial quantity for dynamic discount calculation
+    req.body.initialQuantity = req.body.quantity;
 
     const newProduct = await productModel.create(req.body);
-    res
-      .status(201)
-      .json({ message: "Product added successfully", product: newProduct });
+
+    res.status(201).json({ message: "Product added successfully", product: newProduct });
   } catch (error) {
     next(error);
   }
 };
+
+// Function to handle product sales
+const updateProductOnSale = async (productId, quantitySold) => {
+  const product = await productModel.findById(productId);
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  product.quantity -= quantitySold;
+
+  if (product.quantity < 0) {
+    throw new Error("Insufficient stock");
+  }
+
+  // Calculate the percentage of stock sold
+  const soldPercentage = ((product.initialQuantity - product.quantity) / product.initialQuantity) * 100;
+
+  // Adjust the discount dynamically based on the sold percentage
+  const dynamicDiscount = product.discount * (1 - soldPercentage / 100);
+  product.dynamicDiscount = Math.max(dynamicDiscount, 0); // Ensure the discount does not go negative
+
+  // Notify the seller when stock is critically low
+  if (product.quantity === 5) {
+    notifySeller(
+      product.createdBy,
+      `Your product "${product.title}" is running low on stock (only 5 items left). Please restock soon.`
+    );
+  }
+
+  await product.save();
+};
+
+// Function to notify the seller
+const notifySeller = async (sellerId, message) => {
+  const seller = await userModel.findById(sellerId);
+
+  if (seller) {
+    console.log(`Notification sent to ${seller.email}: ${message}`);
+    // Replace with an actual email or notification service
+  }
+};
+
+
 const getSellerProducts = async (req, res, next) => {
   try {
     const sellerId = req.user._id; // The logged-in seller's ID
@@ -77,7 +149,7 @@ const getSellerProducts = async (req, res, next) => {
 const getAllProducts = catchAsyncError(async (req, res, next) => {
   console.log(req.query);
   const totalResults = await productModel.find().countDocuments();
-
+  
   let apiFeature = new ApiFeatures(
     productModel
       .find()
@@ -317,6 +389,8 @@ export {
   getSizesWithPrices,
   getCustomersByProductId,
   addReview,
+  updateProductOnSale,
+  notifySeller
 };
 
 //   getProductsById,

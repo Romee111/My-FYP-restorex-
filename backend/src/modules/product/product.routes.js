@@ -95,4 +95,10 @@ productRouter
 .route("/getCustomersByProductId/:id")
 .get(product.getCustomersByProductId);
 
+productRouter
+.route("/updtadeProductOnSale/:id")
+.put(protectedRoutes,allowedTo("admin","seller"),product.updateProductOnSale)
+productRouter
+.route("/notifySeller/:id")
+.put(protectedRoutes,allowedTo("admin"),product.notifySeller) 
 export default productRouter;
